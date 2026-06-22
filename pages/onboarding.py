@@ -80,9 +80,9 @@ with tab1:
     st.markdown("### 🛠️ 業務で使用する主要ツール・資料")
     # 🔗 それぞれのマニュアルのURLをリンクとして埋め込みました
     st.markdown("""
-    * [**Appsheet（問合せ管理表）**](https://www.appsheet.com/start/6f2ce284-d4c2-47cc-9508-10f62ec68a5b?newUser=true&onboarding=true&platform=desktop#appName=%E3%80%90appsheet%E3%80%91%E5%95%8F%E5%90%88%E7%AE%A1%E7%90%86-737216964&vss=H4sIAAAAAAAAA6WOsQ7CIBRF_-XOfAGrcTBGF42LOGB5TYgtNIWqDWF308VP7H8IVuPcOL7zcu69AWdNl42XxQl8H37XknpwBIFt35AAF5hZ41tbCTCBtaxHODzvw-MmEBEP7Gt7cuBhisz_aWbQiozXpaY2J2UvJXys9M5OAqOByFB3Xh4rek9NRoyJlbboHKldmjG53i3M_NpIo1ZWpcBSVo7iCx3QRY5bAQAA&view=%E5%95%8F%E5%90%88)[cite: 2]
-    * [**CallCenter業務シート**](https://docs.google.com/spreadsheets/d/1rMDVNAGBPTmZfiR6QyvRO1jND6ZJd6qCGStk3Bo_Wro/edit?usp=sharing)[cite: 2]
-    * [**面談設定マニュアル（CCトークスクリプト）**](https://docs.google.com/spreadsheets/d/18Am2fbTAfrBuCF-lW1FYkNUU_alsfFqtjiscInIq68c/edit?usp=sharing)[cite: 2]
+    * [**Appsheet（問合せ管理表）**](https://www.appsheet.com/start/6f2ce284-d4c2-47cc-9508-10f62ec68a5b?newUser=true&onboarding=true&platform=desktop#appName=%E3%80%90appsheet%E3%80%91%E5%95%8F%E5%90%88%E7%AE%A1%E7%90%86-737216964&vss=H4sIAAAAAAAAA6WOsQ7CIBRF_-XOfAGrcTBGF42LOGB5TYgtNIWqDWF308VP7H8IVuPcOL7zcu69AWdNl42XxQl8H37XknpwBIFt35AAF5hZ41tbCTCBtaxHODzvw-MmEBEP7Gt7cuBhisz_aWbQiozXpaY2J2UvJXys9M5OAqOByFB3Xh4rek9NRoyJlbboHKldmjG53i3M_NpIo1ZWpcBSVo7iCx3QRY5bAQAA&view=%E5%95%8F%E5%90%88)
+    * [**CallCenter業務シート**](https://docs.google.com/spreadsheets/d/1rMDVNAGBPTmZfiR6QyvRO1jND6ZJd6qCGStk3Bo_Wro/edit?usp=sharing)
+    * [**面談設定マニュアル（CCトークスクリプト）**](https://docs.google.com/spreadsheets/d/18Am2fbTAfrBuCF-lW1FYkNUU_alsfFqtjiscInIq68c/edit?usp=sharing)
     """)
 
 # =========================================================================
