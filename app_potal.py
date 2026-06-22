@@ -44,8 +44,8 @@ def show_dashboard():
 page_home = st.Page(show_home, title="🏠 ホーム・戦略共有", default=True)
 
 # 🚀 pagesフォルダ内のファイルを指定して追加！
-page_onbo = st.Page("pages_onboarding.py", title="📖 オンボーディング・研修")
-page_campus = st.Page("pages_campus.py", title="🏫 校舎情報＆スケジュール") # 👈ここを追加！
+page_onbo = st.Page("pages/onboarding.py", title="📖 オンボーディング・研修")
+page_campus = st.Page("pages/campus.py", title="🏫 校舎情報＆スケジュール") # 👈ここを追加！
 
 # 関数呼び出しのページ
 page_appsheet = st.Page(show_appsheet_manual, title="📱 AppSheet操作マニュアル")
