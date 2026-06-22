@@ -76,7 +76,7 @@ with tab1:
     st.checkbox("3. Slackのプロフィール写真を変更（プライベートメールから画像添付 ➡️ 設定）")
     st.checkbox("4. #pos_general での自己紹介投稿")
 
-st.markdown("---")
+    st.markdown("---")
     st.markdown("### 🛠️ 業務で使用する主要ツール・資料")
     # 🔗 それぞれのマニュアルのURLをリンクとして埋め込みました
     st.markdown("""
