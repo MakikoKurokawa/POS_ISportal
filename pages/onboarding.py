@@ -61,10 +61,10 @@ with tab1:
         st.markdown("""
         - `#pos_general`
         - `#pos_contact` / `#pos_west_contact` (東・西の新規問い合わせ通知)
+        - `#pos_ぶち上げtelねん_面談率チーム`（日報提出、日々のコールに関する連絡など）
         - `#pos_callcenter`（たまに重要なディレクションが流れる）
         - `#pos_メール`
         - `#pos_資料送付依頼チャンネル`
-        - `#pos_ぶち上げtelねん_面談率チーム`（日報提出、日々のコールに関する連絡など）
         """)
 
     st.markdown("---")
