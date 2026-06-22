@@ -50,7 +50,7 @@ with tab1:
         st.markdown("**【全事業部対象】**")
         st.markdown("""
         - `#general` (全体アナウンス)
-        - `#情シス問合せ` (PC・アカウントトラブル)
+        - `#情報システム問合せ` (PC・アカウントトラブル)
         - `#コーポレート問合せ` (総務・労務関連)
         - `#bo-アナウンスチャンネル`
         - `#コールグループ_アルバイト`
@@ -59,18 +59,18 @@ with tab1:
         st.markdown("**【POS（武田塾）関連】**")
         st.markdown("""
         - `#pos_general`
-        - `#pos_contact` / `#pos_west_contact` (東・西の連絡)
-        - `#pos_callcenter`
+        - `#pos_contact` / `#pos_west_contact` (東・西の新規問い合わせ通知)
+        - `#pos_callcenter`（たまに重要なディレクションが流れる）
         - `#pos_メール`
         - `#pos_資料送付依頼チャンネル`
-        - `#pos_ぶち上げtelねん_面談率チーム` 🔥
+        - `#pos_ぶち上げtelねん_面談率チーム`（日報提出、日々のコールに関する連絡など）
         """)
 
     st.markdown("---")
     st.markdown("### 🚨 今日中に必ず対応してほしいこと")
     
     # 業務開始時のチェックリスト
-    st.checkbox("1. セキュリティ研修 ＆ KOTレクチャー（主任の一柳さんと実施）")
+    st.checkbox("1. セキュリティ研修 ＆ KOTレクチャー（一柳さん（主任）と実施）")
     st.checkbox("2. 各種初期登録の対応（レクチャー後に実施）")
     st.checkbox("3. Slackのプロフィール写真を変更（プライベートメールから画像添付 ➡️ 設定）")
     st.checkbox("4. #pos_general での自己紹介投稿")
