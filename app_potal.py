@@ -38,15 +38,14 @@ def show_knowledge():
 
 def show_dashboard():
     st.title("📊 本日の実績 ＆ Slack日報手動送信")
-
 # =========================================================================
 # 🧭 ナビゲーション
 # =========================================================================
 page_home = st.Page(show_home, title="🏠 ホーム・戦略共有", default=True)
 
-# 🚀 切り分けたファイルを指定
+# 🚀 pagesフォルダ内のファイルを指定して追加！
 page_onbo = st.Page("pages/onboarding.py", title="📖 オンボーディング・研修")
-page_campus = st.Page("pages/campus.py", title="🏫 校舎情報＆スケジュール")
+page_campus = st.Page("pages/campus.py", title="🏫 校舎情報＆スケジュール") # 👈ここを追加！
 
 # 関数呼び出しのページ
 page_appsheet = st.Page(show_appsheet_manual, title="📱 AppSheet操作マニュアル")
@@ -59,5 +58,15 @@ st.sidebar.title("POS_ISコックピット 📞")
 st.sidebar.caption("v1.11 (6/22更新)")
 st.sidebar.markdown("---")
 
-pg = st.navigation([page_home, page_onbo, page_appsheet, page_script, page_faq, page_campus, page_knowledge, page_dash])
+# 🚀 リストの中に `page_campus` も忘れずに含める
+pg = st.navigation([
+    page_home, 
+    page_onbo, 
+    page_campus, # 👈ここにも追加！
+    page_appsheet, 
+    page_script, 
+    page_faq, 
+    page_knowledge, 
+    page_dash
+])
 pg.run()
