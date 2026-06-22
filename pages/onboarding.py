@@ -26,11 +26,12 @@ with tab1:
     col_div, col_func = st.columns(2)
     with col_div:
         st.markdown("#### 🚀 各事業部")
+        # 🔗 リンク付きの箇条書きに修正しました
         st.markdown("""
-        * **武田塾 事業部 (POS)** 👈 メイン担当
-        * キミノスクール 事業部 (SLEG)
-        * キミノ高等学院 事業部 (CELF)
-        * ライフデザイン事業部 (LD)
+        * [**武田塾 事業部 (POS)**](https://www.takeda.tv/)
+        * [**キミノスクール 事業部 (SLEG)**](https://kimino-school.com/)
+        * [**キミノ高等学院 事業部 (CELF)**](https://kimino-school.com/gakuen/)
+        * **ライフデザイン事業部 (LD)**
         """)
     with col_func:
         st.markdown("#### ⚙️ 社内機能・部門")
