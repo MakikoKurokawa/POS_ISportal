@@ -21,12 +21,11 @@ with tab1:
     
     st.markdown("### 🗺️ クルイトの事業部構成")
     st.info("インサイドセールス（IS）グループは、全事業部の成長を支える重要な「機能」として位置づけられています。")
-    
+
     # 事業部と機能の構造を整理
     col_div, col_func = st.columns(2)
     with col_div:
         st.markdown("#### 🚀 各事業部")
-        # 🔗 リンク付きの箇条書きに修正しました
         st.markdown("""
         * [**武田塾 事業部 (POS)**](https://www.takeda.tv/)
         * [**キミノスクール 事業部 (SLEG)**](https://kimino-school.com/)
@@ -36,12 +35,45 @@ with tab1:
     with col_func:
         st.markdown("#### ⚙️ 社内機能・部門")
         st.markdown("""
-        * **コールグループ (IS)**
-        * スクールマーケティング部
-        * HR部
-        * コーポレート部
+        * **スクールマーケティング部**
+          * ├ **マーケティンググループ** （WEB集客・HP運営）
+          * └ **コールグループ (IS)** 📞
+        * **HR部**
+        * **コーポレート部**
+        """)
+    st.markdown("---")
+    st.markdown("### 📞 私たちの役割（インサイドセールスとは？）")
+    st.markdown("一言でいうと、私たちは**「WEB集客（マーケティング）」と「各事業部の現場（校舎など）」を繋ぐ、全社横断のバトンリレーの第2走者**です。")
+    
+    # 3カラムで全社的なバトンリレーを可視化
+    col_role1, col_role2, col_role3 = st.columns(3)
+    with col_role1:
+        st.markdown("<div style='text-align: center; font-size: 20px; font-weight: bold;'>① 集客</div>", unsafe_allow_html=True)
+        st.info("""
+        **マーケティンググループ**  
+        広告やHPを運用し、勉強に悩む生徒・保護者様からの「問い合わせ」という名のバトンを生み出す段階。
+        """)
+    with col_role2:
+        st.markdown("<div style='text-align: center; font-size: 20px; font-weight: bold;'>➡️ ② 繋ぐ（私たちのチーム）</div>", unsafe_allow_html=True)
+        st.error("""
+        **コールグループ（IS）**  
+        マーケチームから受け取ったバトンを引き継ぎ、お電話でお客様の悩みを丁寧にヒアリングして、各事業部の現場へとお繋ぎする段階。
+        """)
+    with col_role3:
+        st.markdown("<div style='text-align: center; font-size: 20px; font-weight: bold;'>➡️ ③ 現場のサポート</div>", unsafe_allow_html=True)
+        st.success("""
+        **各事業部の現場（武田塾の校舎など）**  
+        私たちが繋いだお客様と直接面談（受験相談など）を行い、一人ひとりに合わせた具体的な入会・通塾のサポートを行う段階。
         """)
 
+    st.markdown("""
+    > 💡 **全社を支えるISの重要性**  
+    > 私たちのチームは、特定の事業部だけに閉じこもるのではなく、 **すべての事業部のお客様を各現場へと繋ぐ「全社横断の窓口」** としての役割を担っています。  
+    > どんなに良い広告（①）でお問い合わせをいただいても、私たちの電話（②）がなければ、お客様は現場（③）に足を運んでくれません。
+    > 武田塾をはじめ、すべての事業の価値をお客様に届けるための非常に重要なポジションです。
+    """)
+
+    
     st.markdown("---")
     st.markdown("### 💬 主要Slackチャンネル一覧")
     st.caption("まずは以下のチャンネルに参加し、業務の流れやアナウンスをチェックしてください。")
@@ -51,8 +83,8 @@ with tab1:
         st.markdown("**【全事業部対象】**")
         st.markdown("""
         - `#general` (全体アナウンス)
-        - `#情報システム問合せ` (PC・アカウントトラブル)
-        - `#コーポレート問合せ` (総務・労務関連)
+        - `#情シス問合せ窓口` (PC・アカウントトラブル)
+        - `#コーポレート問合せ窓口` (総務・労務関連)
         - `#bo-アナウンスチャンネル`
         - `#コールグループ_アルバイト`
         """)
