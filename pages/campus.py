@@ -11,14 +11,22 @@ SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRNLGbIj6c_sW
 @st.cache_data
 def load_campus_master_safe(url):
     try:
-        # 💡 複雑なURL変換や、時間泥棒コードはエラーの元になるので全削除！
-        # 引数で渡されたURL（ウェブ公開用のURL）をそのまま実直に使います。
         csv_url = url
-        
         response = requests.get(csv_url, timeout=5)
         if response.status_code == 200:
-            df = pd.read_csv(StringIO(response.text))
+            # 💡 【対策】スプシの1行目が空白行だったりズレていても、
+            # 自動的に「文字が入っている行」を列名として認識させる設定（header='infer'）
+            df = pd.read_csv(StringIO(response.text), header='infer')
+            
+            # 列名の前後に目に見えないスペースが入っていたら綺麗に削る
             df.columns = df.columns.str.strip()
+            
+            # 💡 デバッグ用：万が一、列名がズレていた場合のために
+            # 「校舎名」という列がどうしても見つからなければ、強制的に1行目を列名に再設定する
+            if "校舎名" not in df.columns and len(df) > 0:
+                df.columns = df.iloc[0].astype(str).str.strip()
+                df = df[1:].reset_index(drop=True)
+                
             return df
         else:
             return pd.DataFrame()
