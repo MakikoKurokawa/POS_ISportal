@@ -33,8 +33,12 @@ st.set_page_config(
 # 🚀 修正：「スプシ最新化ボタン」は残したいので、ここでのキャッシュクリア用としてシンプルに記述
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔄 データの管理")
-if st.sidebar.button("スプシの最新情報を取得", use_container_width=True):
+# 🟢 修正後の「最新情報取得」ボタンのコード
+if st.button("最新情報に更新"):
+    # Streamlitのすべての記憶（キャッシュ）を強制クリアする魔法の1行
     st.cache_data.clear()
+    
+    # 画面を強制的に再起動して、最新のスプシを読み込み直させる
     st.rerun()
 
 # =========================================================================
