@@ -34,9 +34,9 @@ df_campus = load_campus_master_safe(SPREADSHEET_URL)
 
 # --- 信号機・行の色付けロジック ---
 
+# --- 信号機・行の色付けロジック ＆ 表の見た目調整 ---
 def style_campus_df(df):
-    # 💡 【修正】画面の表（メイン一覧）に見せたい列「だけ」を順番通りに指定します
-    # ※ここに書かれていない「校舎カレンダー」「カレンダーURL」「会議室①」「会議室②」は自動的に非表示になります！
+    # 画面の表（メイン一覧）に見せたい列「だけ」を順番通りに指定
     display_cols = [
         "エリア", 
         "校舎名", 
@@ -53,15 +53,45 @@ def style_campus_df(df):
     available_cols = [c for c in display_cols if c in df.columns]
     sub_df = df[available_cols].copy()
     
-    # 信号機（🔴や💛）による行の色付けルール
-    def make_style(row):
-        if "🔴" in str(row.get("受付状況", "")) or "❌" in str(row.get("中学生受付", "")):
-            return ["background-color: #ffcccc; color: #330000; font-weight: bold;"] * len(row)
-        elif "💛" in str(row.get("受付状況", "")) or "💛" in str(row.get("中学生受付", "")) or "📘" in str(row.get("中学生受付", "")):
-            return ["background-color: #fff2cc; color: #332200; font-weight: bold;"] * len(row)
-        return [""] * len(row)
+    # 🎨 空っぽのスタイル用の枠組み（元データと同じ形のDataFrameを作る）
+    style_df = pd.DataFrame("", index=sub_df.index, columns=sub_df.columns)
+    
+    # 1行ずつ色付けの判定をしていく
+    for idx, row in sub_df.iterrows():
+        status = str(row.get("受付状況", ""))
+        jr_status = str(row.get("中学生受付", ""))
         
-    return sub_df.style.apply(make_style, axis=1)
+        # -------------------------------------------------------------
+        # ルール①：【今まで通り】受付状況が🔴や❌のときは、1行まるまる網掛け
+        # -------------------------------------------------------------
+        if "🔴" in status or "❌" in status:
+            style_df.loc[idx] = "background-color: #ffcccc; color: #330000; font-weight: bold;"
+            
+        # 受付状況が💛などの警告色のときも、1行まるまる薄黄色
+        elif "💛" in status:
+            style_df.loc[idx] = "background-color: #fff2cc; color: #332200; font-weight: bold;"
+            
+        # -------------------------------------------------------------
+        # ルール②：【新ルール】中学生受付が❌のときは、「中学生」に関する列だけ網掛け
+        # -------------------------------------------------------------
+        if "❌" in jr_status:
+            jr_style = "background-color: #fce4d6; color: #c00000; font-weight: bold; border: 1px solid #c00000;"
+            
+            # 「中学生受付」と「中学生ディレクション」のセルだけをピンポイントで上書き色付け！
+            if "中学生受付" in style_df.columns:
+                style_df.loc[idx, "中学生受付"] = jr_style
+            if "中学生ディレクション" in style_df.columns:
+                style_df.loc[idx, "中学生ディレクション"] = jr_style
+                
+        # 中学生受付が💛や📘のときも、中学生の列だけを薄黄色に
+        elif "💛" in jr_status or "📘" in jr_status:
+            jr_warn_style = "background-color: #fff2cc; color: #332200; font-weight: bold;"
+            if "中学生受付" in style_df.columns:
+                style_df.loc[idx, "中学生受付"] = jr_warn_style
+            if "中学生ディレクション" in style_df.columns:
+                style_df.loc[idx, "中学生ディレクション"] = jr_warn_style
+
+    return sub_df.style.apply(lambda _: style_df, axis=None)
 
 # --- 画面のメイン表示処理 ---
 st.title("🏫 校舎ステータス一覧 ＆ スケジュール調整")
