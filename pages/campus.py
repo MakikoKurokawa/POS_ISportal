@@ -12,22 +12,14 @@ SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRNLGbIj6c_sW
 @st.cache_data
 def load_campus_master_safe(url):
     try:
-        csv_url = url.split("/edit")[0] + "/gviz/tq?tqx=out:csv"
+        # 🟢 修正：ウェブ公開URLをそのまま使ってrequestsを飛ばします
+        csv_url = url
         
-        # 🟢 Googleのサボりを防止する「時間泥棒コード」
+        # Googleのサボり防止コード（これは残しておいてOKです）
         import time
         csv_url += f"&_cache_bust={int(time.time())}"
         
         response = requests.get(csv_url, timeout=5)
-        if response.status_code == 200:
-            df = pd.read_csv(StringIO(response.text))
-            df.columns = df.columns.str.strip()
-            return df
-        else:
-            return pd.DataFrame()
-    except Exception as e:
-        return pd.DataFrame()
-
 # データの読み込み
 df_campus = load_campus_master_safe(SPREADSHEET_URL)
 
