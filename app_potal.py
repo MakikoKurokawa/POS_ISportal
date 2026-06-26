@@ -5,7 +5,7 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
-    st.write("武田塾 社内システム（ISコックピット）")
+    st.write("POS ISポータル")
     st.write("利用するにはGoogleアカウントでログインしてください。")
     
     if st.button("Googleアカウントでログイン"):
