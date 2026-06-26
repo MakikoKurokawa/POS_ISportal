@@ -5,7 +5,7 @@ import requests
 from io import StringIO
 
 # --- 🚨 スプレッドシートの共有URLを設定 🚨 ---
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1M9PwHaNywxZEd1LyKj76lMW82R05pDKUArc6Ni4LaUc/edit?gid=628921947#gid=628921947"
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1M9PwHaNywxZEd1LyKj76lMW82R05pDKUArc6Ni4LaUc/"
 
 # --- キャッシュによるデータ読み込み関数 ---
 # ttl="24h" を消して、メイン側の「最新化ボタン」でいつでも爆破できるようにします！
