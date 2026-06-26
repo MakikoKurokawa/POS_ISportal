@@ -106,10 +106,10 @@ else:
     if pd.notna(c_info.get('担当者に関する備考欄')) and str(c_info['担当者に関する備考欄']).strip() != "":
         st.warning(f"🚗 **【担当者に関する備考・移動注意】**\n\n{c_info['担当者に関する備考欄']}")
 
-    combined_url = c_info.get("担当①カレンダー")
+    combined_url = c_info.get("カレンダーURL")
 
     if pd.notna(combined_url) and str(combined_url).startswith("http"):
         st.caption("💡 複数のカレンダー・会議室の予定が1つの画面に重なって表示されています。")
         st.components.v1.iframe(str(combined_url).strip(), height=750, scrolling=True)
     else:
-        st.info("この校舎の「担当①カレンダー」列に有効なURLが登録されていません。スプレッドシートを確認してください。")
+        st.info("この校舎の「カレンダーURL」列に有効なURLが登録されていません。スプレッドシートを確認してください。")
