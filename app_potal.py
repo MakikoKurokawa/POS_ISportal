@@ -36,17 +36,11 @@ st.sidebar.markdown("### 🔄 データの管理")
 
 # 🟢 修正後の「最新情報取得」ボタンのコード
 if st.button("最新情報に更新"):
-    # 1. 普通のキャッシュをクリア
+    # Streamlitのデータ用・システム用の全キャッシュを力技で丸ごと完全消去！
     st.cache_data.clear()
+    st.cache_resource.clear()
     
-    # 2. 【これが本命】スプシ接続（gsheets）のガチガチな記憶を根こそぎ完全消去する
-    if hasattr(st, "connections") and "gsheets" in st.connections:
-        st.connections.gsheets.GSheetsConnection.clear_all_caches()
-    elif hasattr(st, "connection"):
-        # 古いバージョンや独自のキャッシュ対策として、こちらも念のため全消去
-        st.cache_resource.clear()
-    
-    # 3. 画面を強制的に再起動して、最新のスプシを読み込み直させる
+    # 画面を強制的に再起動して、最新のスプシを読み込み直させる
     st.rerun()
 
 # =========================================================================
