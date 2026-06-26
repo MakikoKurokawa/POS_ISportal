@@ -12,21 +12,15 @@ SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRNLGbIj6c_sW
 def load_campus_master_safe(url):
     try:
         csv_url = url
+        
+        # 文字化け対策
         response = requests.get(csv_url, timeout=5)
+        response.encoding = 'utf-8'
+        
         if response.status_code == 200:
-            # 💡 【対策】スプシの1行目が空白行だったりズレていても、
-            # 自動的に「文字が入っている行」を列名として認識させる設定（header='infer'）
-            df = pd.read_csv(StringIO(response.text), header='infer')
-            
-            # 列名の前後に目に見えないスペースが入っていたら綺麗に削る
+            # スプシの1行目（手動ベタ打ちヘッダー）をそのまま綺麗に列名として読み込みます
+            df = pd.read_csv(StringIO(response.text))
             df.columns = df.columns.str.strip()
-            
-            # 💡 デバッグ用：万が一、列名がズレていた場合のために
-            # 「校舎名」という列がどうしても見つからなければ、強制的に1行目を列名に再設定する
-            if "校舎名" not in df.columns and len(df) > 0:
-                df.columns = df.iloc[0].astype(str).str.strip()
-                df = df[1:].reset_index(drop=True)
-                
             return df
         else:
             return pd.DataFrame()
@@ -36,13 +30,6 @@ def load_campus_master_safe(url):
 # データの読み込み
 df_campus = load_campus_master_safe(SPREADSHEET_URL)
 
-# 🕵️‍♂️ 【追加】エラーで止まる前に、Googleから届いたデータを画面にそのまま映し出す魔法
-st.write("--- 🛠️ デバッグ情報（Googleから届いた生データ） ---")
-st.write("届いたデータの行数:", len(df_campus))
-st.write("認識した列名の一覧:", list(df_campus.columns))
-st.write("データの先頭5行:")
-st.dataframe(df_campus.head())
-st.write("----------------------------------------------")
 
 
 # --- 信号機・行の色付けロジック ---
