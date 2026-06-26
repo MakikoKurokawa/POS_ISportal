@@ -8,12 +8,16 @@ from io import StringIO
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1M9PwHaNywxZEd1LyKj76lMW82R05pDKUArc6Ni4LaUc/edit?usp=sharing"
 
 # --- キャッシュによるデータ読み込み関数 ---
+# ttl="24h" を消して、メイン側の「最新化ボタン」でいつでも爆破できるようにします！
 @st.cache_data
 def load_campus_master_safe(url):
     try:
         csv_url = url.split("/edit")[0] + "/gviz/tq?tqx=out:csv"
+        
+        # 🟢 Googleのサボりを防止する「時間泥棒コード」
         import time
-        csv url += f"&_cache_bust={int(time.time())}"
+        csv_url += f"&_cache_bust={int(time.time())}"
+        
         response = requests.get(csv_url, timeout=5)
         if response.status_code == 200:
             df = pd.read_csv(StringIO(response.text))
