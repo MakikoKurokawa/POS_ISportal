@@ -110,30 +110,36 @@ else:
     with col_d1:
         st.markdown(f"#### 📢 {selected_campus} のディレクション")
         
-        # 改行対策（\n を \n\n に変換）
-        k_direction = str(c_info.get('校舎ディレクション', '特になし')).replace('\n', '\n\n')
-        j_direction = str(c_info.get('中学生ディレクション', '特になし')).replace('\n', '\n\n')
+        # 🪄 魔法： \n を <br> に変えて、標準的な狭い行間にします！
+        k_direction = str(c_info.get('校舎ディレクション', '特になし')).replace('\n', '<br>')
+        j_direction = str(c_info.get('中学生ディレクション', '特になし')).replace('\n', '<br>')
         
-        st.error(f"**【全体受付状況】** {c_info.get('受付状況', '未設定')}\n\n👉 {k_direction}")
-        st.warning(f"**【中学生の受付】** {c_info.get('中学生受付', '未設定')}\n\n👉 {j_direction}")
+        # 💡 HTMLタグ（<br>）を認識させるために、unsafe_allow_html=True を仕込みます
+        st.markdown(f'<div style="background-color: #ffcccc; color: #330000; padding: 15px; border-radius: 5px; font-weight: bold;">**【全体受付状況】** {c_info.get("受付状況", "未設定")}<br><br>👉 {k_direction}</div>', unsafe_allow_html=True)
+        st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True) # すきま調整
+        st.markdown(f'<div style="background-color: #fff2cc; color: #332200; padding: 15px; border-radius: 5px; font-weight: bold;">**【中学生の受付】** {c_info.get("中学生受付", "未設定")}<br><br>👉 {j_direction}</div>', unsafe_allow_html=True)
         
     with col_d2:
         st.markdown("#### 📱 アクセス・基本情報")
         
-        # 各種情報の改行対策
-        station = str(c_info.get('最寄り駅', '未設定')).replace('\n', '\n\n')
-        address = str(c_info.get('住所', '未設定')).replace('\n', '\n\n')
-        open_time = str(c_info.get('開校時間', '未設定')).replace('\n', '\n\n')
-        study_time = str(c_info.get('自習室利用時間', '未設定')).replace('\n', '\n\n')
-        mendan_time = str(c_info.get('面談可能時間', '未設定')).replace('\n', '\n\n')
+        # 🪄 各種情報の改行も <br> に統一
+        station = str(c_info.get('最寄り駅', '未設定')).replace('\n', '<br>')
+        address = str(c_info.get('住所', '未設定')).replace('\n', '<br>')
+        open_time = str(c_info.get('開校時間', '未設定')).replace('\n', '<br>')
+        study_time = str(c_info.get('自習室利用時間', '未設定')).replace('\n', '<br>')
+        mendan_time = str(c_info.get('面談可能時間', '未設定')).replace('\n', '<br>')
         
-        st.success(f"""
-* **最寄り駅:** {station}  
-  (開校: {open_time} / 自習室: {study_time})
-* **面談可能時間:** {mendan_time}
-* **住所:** {address}
-""")
+        # 綺麗に枠に収めるためのHTML化
+        st.markdown(f"""
+        <div style="background-color: #d1e7dd; color: #0f5132; padding: 15px; border-radius: 5px;">
+        📌 <b>最寄り駅:</b> {station}<br>
+        (開校: {open_time} / 自習室: {study_time})<br><br>
+        📌 <b>面談可能時間:</b> {mendan_time}<br><br>
+        📌 <b>住所:</b> {address}
+        </div>
+        """, unsafe_allow_html=True)
         
+        st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True) # すきま調整
         col_btn1, col_btn2 = st.columns(2)
         if pd.notna(c_info.get('Googleマップ')) and str(c_info.get('Googleマップ')).startswith("http"):
             col_btn1.link_button("🗺️ Googleマップで開く", c_info['Googleマップ'], use_container_width=True)
@@ -144,14 +150,11 @@ else:
     st.markdown(f"### 👥 {selected_campus} スケジュール＆会議室 一元確認（特大合体ビュー）")
     
     if pd.notna(c_info.get('担当者に関する備考欄')) and str(c_info['担当者に関する備考欄']).strip() != "":
-        # 備考欄の改行対策
-        bikou = str(c_info['担当者に関する備考欄']).replace('\n', '\n\n')
-        st.warning(f"🚗 **【担当者に関する備考・移動注意】**\n\n{bikou}")
-
-    combined_url = c_info.get("カレンダーURL")
-
-    if pd.notna(combined_url) and str(combined_url).startswith("http"):
-        st.caption("💡 複数のカレンダー・会議室の予定が1つの画面に重なって表示されています。")
-        st.components.v1.iframe(str(combined_url).strip(), height=750, scrolling=True)
-    else:
-        st.info("この校舎の「カレンダーURL」列に有効なURLが登録されていません。スプレッドシートを確認してください。")
+        # 🪄 一番もどかしかった備考欄も <br> で普通の行間に！
+        bikou = str(c_info['担当者に関する備考欄']).replace('\n', '<br>')
+        st.markdown(f"""
+        <div style="background-color: #fff3cd; color: #664d03; padding: 15px; border-radius: 5px; border-left: 5px solid #ffc107;">
+        🚗 <b>【担当者に関する備考・移動注意】</b><br><br>
+        {bikou}
+        </div>
+        """, unsafe_allow_html=True)
