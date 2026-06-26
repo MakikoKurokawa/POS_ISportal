@@ -83,31 +83,32 @@ def style_campus_df(df):
         elif "💛" in jr_status or "📘" in jr_status:
             jr_warn_style = "background-color: #fff2cc; color: #332200; font-weight: bold;"
             if "中学生受付" in style_df.columns:
+                style_df.columns
                 style_df.loc[idx, "中学生受付"] = jr_warn_style
             if "中学生ディレクション" in style_df.columns:
                 style_df.loc[idx, "中学生ディレクション"] = jr_warn_style
 
     return sub_df.style.apply(lambda _: style_df, axis=None)
 
+
 # --- 画面のメイン表示処理 ---
 st.title("🏫 校舎ステータス一覧 ＆ スケジュール調整")
-
-# --- メイン画面：校舎一覧表の表示 ---
-    st.subheader("🏫 全校舎ステータス一覧")
-    
-    # 💡 【修正】 height=600 を追加して、縦幅を約2倍（20行〜25行がスクロールなしで見える大きさ）に広げます！
-    st.dataframe(
-        styled_df, 
-        use_container_width=True,
-        height=600
-    )
 
 if df_campus.empty:
     st.warning("スプレッドシートからデータが読み込めなかったため、一覧を表示できません。")
 else:
     st.markdown("### 🚨 【即電対応】全校舎 受付・アクセス状況一覧")
+    
+    # スタイルを適用
     styled_df = style_campus_df(df_campus)
-    st.dataframe(styled_df, use_container_width=True, hide_index=True)
+    
+    # 🟢 縦幅を2倍（height=600）にし、インデックス（左端の数字）を非表示にして表示
+    st.dataframe(
+        styled_df, 
+        use_container_width=True, 
+        hide_index=True,
+        height=600
+    )
     
     st.markdown("---")
     st.markdown("### 📅 カレンダー一元確認 ＆ 詳細アクセス情報")
