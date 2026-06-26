@@ -5,7 +5,7 @@ import requests
 from io import StringIO
 
 # --- 🚨 スプレッドシートの共有URLを設定 🚨 ---
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRNLGbIj6c_sWtQUqLBgywLhDH1dec1OkUr4mG21XRXWU7_DoMfIGrj-S3xyp_aDjSUmXJ4_ZvGitfz/pubhtml"
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRNLGbIj6c_sWtQUqLBgywLhDH1dec1OkUr4mG21XRXWU7_DoMfIGrj-S3xyp_aDjSUmXJ4_ZvGitfz/pub?output=csv"
 
 # --- キャッシュによるデータ読み込み関数 ---
 @st.cache_data
