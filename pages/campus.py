@@ -18,7 +18,6 @@ def load_campus_master_safe(url):
         response.encoding = 'utf-8'
         
         if response.status_code == 200:
-            # スプシの1行目（手動ベタ打ちヘッダー）をそのまま綺麗に列名として読み込みます
             df = pd.read_csv(StringIO(response.text))
             df.columns = df.columns.str.strip()
             return df
@@ -32,7 +31,6 @@ df_campus = load_campus_master_safe(SPREADSHEET_URL)
 
 # --- 信号機・行の色付けロジック ＆ 表の見た目調整 ---
 def style_campus_df(df):
-    # 画面の表（メイン一覧）に見せたい列「だけ」を順番通りに指定
     display_cols = [
         "エリア", 
         "校舎名", 
@@ -45,45 +43,34 @@ def style_campus_df(df):
         "最寄り駅"
     ]
     
-    # スプシに存在する列だけを安全に抜き出す
     available_cols = [c for c in display_cols if c in df.columns]
     sub_df = df[available_cols].copy()
     
-    # 🎨 空っぽのスタイル用の枠組み（元データと同じ形のDataFrameを作る）
+    # 🎨 空っぽのスタイル用の枠組みを作る
     style_df = pd.DataFrame("", index=sub_df.index, columns=sub_df.columns)
     
-    # 1行ずつ色付けの判定をしていく
     for idx, row in sub_df.iterrows():
         status = str(row.get("受付状況", ""))
         jr_status = str(row.get("中学生受付", ""))
         
-        # -------------------------------------------------------------
-        # ルール①：【今まで通り】受付状況が🔴や❌のときは、1行まるまる網掛け
-        # -------------------------------------------------------------
+        # ルール①：受付状況が🔴や❌のときは、1行まるまる網掛け
         if "🔴" in status or "❌" in status:
             style_df.loc[idx] = "background-color: #ffcccc; color: #330000; font-weight: bold;"
-            
         # 受付状況が💛などの警告色のときも、1行まるまる薄黄色
         elif "💛" in status:
             style_df.loc[idx] = "background-color: #fff2cc; color: #332200; font-weight: bold;"
             
-        # -------------------------------------------------------------
-        # ルール②：【新ルール】中学生受付が❌のときは、「中学生」に関する列だけ網掛け
-        # -------------------------------------------------------------
+        # ルール②：中学生受付が❌のときは、「中学生」に関する列だけ網掛け
         if "❌" in jr_status:
             jr_style = "background-color: #fce4d6; color: #c00000; font-weight: bold; border: 1px solid #c00000;"
-            
-            # 「中学生受付」と「中学生ディレクション」のセルだけをピンポイントで上書き色付け！
             if "中学生受付" in style_df.columns:
                 style_df.loc[idx, "中学生受付"] = jr_style
             if "中学生ディレクション" in style_df.columns:
                 style_df.loc[idx, "中学生ディレクション"] = jr_style
-                
         # 中学生受付が💛や📘のときも、中学生の列だけを薄黄色に
         elif "💛" in jr_status or "📘" in jr_status:
             jr_warn_style = "background-color: #fff2cc; color: #332200; font-weight: bold;"
             if "中学生受付" in style_df.columns:
-                style_df.columns
                 style_df.loc[idx, "中学生受付"] = jr_warn_style
             if "中学生ディレクション" in style_df.columns:
                 style_df.loc[idx, "中学生ディレクション"] = jr_warn_style
@@ -99,10 +86,9 @@ if df_campus.empty:
 else:
     st.markdown("### 🚨 【即電対応】全校舎 受付・アクセス状況一覧")
     
-    # スタイルを適用
     styled_df = style_campus_df(df_campus)
     
-    # 🟢 縦幅を2倍（height=600）にし、インデックス（左端の数字）を非表示にして表示
+    # 縦幅を2倍（height=600）にして表示
     st.dataframe(
         styled_df, 
         use_container_width=True, 
@@ -120,11 +106,11 @@ else:
         
     c_info = df_campus[df_campus["校舎名"] == selected_campus].iloc[0]
     
-col_d1, col_d2 = st.columns(2)
+    col_d1, col_d2 = st.columns(2)
     with col_d1:
         st.markdown(f"#### 📢 {selected_campus} のディレクション")
         
-        # 💡 【改行対策】 .replace('\n', '\n\n') をつけて改行を強制認識させます
+        # 改行対策（\n を \n\n に変換）
         k_direction = str(c_info.get('校舎ディレクション', '特になし')).replace('\n', '\n\n')
         j_direction = str(c_info.get('中学生ディレクション', '特になし')).replace('\n', '\n\n')
         
@@ -134,19 +120,19 @@ col_d1, col_d2 = st.columns(2)
     with col_d2:
         st.markdown("#### 📱 アクセス・基本情報")
         
-        # 💡 【改行対策】 住所や最寄り駅、開校時間も改行に対応
+        # 各種情報の改行対策
         station = str(c_info.get('最寄り駅', '未設定')).replace('\n', '\n\n')
         address = str(c_info.get('住所', '未設定')).replace('\n', '\n\n')
-        open_time = str(c_info.get('開校時間', '未設定'))
-        study_time = str(c_info.get('自習室利用時間', '未設定'))
-        mendan_time = str(c_info.get('面談可能時間', '未設定'))
+        open_time = str(c_info.get('開校時間', '未設定')).replace('\n', '\n\n')
+        study_time = str(c_info.get('自習室利用時間', '未設定')).replace('\n', '\n\n')
+        mendan_time = str(c_info.get('面談可能時間', '未設定')).replace('\n', '\n\n')
         
         st.success(f"""
-        * **最寄り駅:** {station}  
-          (開校: {open_time} / 自習室: {study_time})
-        * **面談可能時間:** {mendan_time}
-        * **住所:** {address}
-        """)
+* **最寄り駅:** {station}  
+  (開校: {open_time} / 自習室: {study_time})
+* **面談可能時間:** {mendan_time}
+* **住所:** {address}
+""")
         
         col_btn1, col_btn2 = st.columns(2)
         if pd.notna(c_info.get('Googleマップ')) and str(c_info.get('Googleマップ')).startswith("http"):
@@ -158,6 +144,14 @@ col_d1, col_d2 = st.columns(2)
     st.markdown(f"### 👥 {selected_campus} スケジュール＆会議室 一元確認（特大合体ビュー）")
     
     if pd.notna(c_info.get('担当者に関する備考欄')) and str(c_info['担当者に関する備考欄']).strip() != "":
-        # 💡 【改行対策】 一番もどかしかった「担当者に関する備考欄」の改行もこれで完璧に再現！
+        # 備考欄の改行対策
         bikou = str(c_info['担当者に関する備考欄']).replace('\n', '\n\n')
         st.warning(f"🚗 **【担当者に関する備考・移動注意】**\n\n{bikou}")
+
+    combined_url = c_info.get("カレンダーURL")
+
+    if pd.notna(combined_url) and str(combined_url).startswith("http"):
+        st.caption("💡 複数のカレンダー・会議室の予定が1つの画面に重なって表示されています。")
+        st.components.v1.iframe(str(combined_url).strip(), height=750, scrolling=True)
+    else:
+        st.info("この校舎の「カレンダーURL」列に有効なURLが登録されていません。スプレッドシートを確認してください。")
