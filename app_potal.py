@@ -76,7 +76,6 @@ page_faq = st.Page(show_faq, title="🔍 FAQ・カウンタートーク")
 page_knowledge = st.Page(show_knowledge, title="📝 ナレッジ共有フォーム")
 page_dash = st.Page(show_dashboard, title="📊 実績ダッシュボード＆日報")
 
-st.sidebar.title("POS_ISコックピット 📞")
 st.sidebar.markdown("---")
 
 pg = st.navigation([page_home, page_onbo, page_appsheet, page_script, page_faq, page_campus, page_knowledge, page_dash])
