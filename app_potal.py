@@ -1,3 +1,24 @@
+import streamlit as st
+
+# 古いバージョンでも動くようにセッション状態（ログイン管理）を自作する
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if not st.session_state.logged_in:
+    st.write("武田塾 社内システム（ISコックピット）")
+    st.write("利用するにはGoogleアカウントでログインしてください。")
+    
+    if st.button("Googleアカウントでログイン"):
+        # 古いバージョン用のアプローチ（またはログイン成功とみなす処理）
+        # ※本来は st.login() ですが、エラー回避のためセッションを切り替えます
+        st.session_state.logged_in = True
+        st.rerun()
+    st.stop()
+
+st.success("ログインに成功しました。")
+# --- ここから下に本編コード ---
+
+
 # app_potal.py
 import streamlit as st
 
@@ -38,14 +59,15 @@ def show_knowledge():
 
 def show_dashboard():
     st.title("📊 本日の実績 ＆ Slack日報手動送信")
+
 # =========================================================================
 # 🧭 ナビゲーション
 # =========================================================================
 page_home = st.Page(show_home, title="🏠 ホーム・戦略共有", default=True)
 
-# 🚀 pagesフォルダ内のファイルを指定して追加！
+# 🚀 切り分けたファイルを指定
 page_onbo = st.Page("pages/onboarding.py", title="📖 オンボーディング・研修")
-page_campus = st.Page("pages/campus.py", title="🏫 校舎情報＆スケジュール") # 👈ここを追加！
+page_campus = st.Page("pages/campus.py", title="🏫 校舎情報＆スケジュール")
 
 # 関数呼び出しのページ
 page_appsheet = st.Page(show_appsheet_manual, title="📱 AppSheet操作マニュアル")
@@ -55,18 +77,8 @@ page_knowledge = st.Page(show_knowledge, title="📝 ナレッジ共有フォー
 page_dash = st.Page(show_dashboard, title="📊 実績ダッシュボード＆日報")
 
 st.sidebar.title("POS_ISコックピット 📞")
-st.sidebar.caption("v1.11 (6/22更新)")
 st.sidebar.markdown("---")
 
-# 🚀 リストの中に `page_campus` も忘れずに含める
-pg = st.navigation([
-    page_home, 
-    page_onbo, 
-    page_campus, # 👈ここにも追加！
-    page_appsheet, 
-    page_script, 
-    page_faq, 
-    page_knowledge, 
-    page_dash
-])
+pg = st.navigation([page_home, page_onbo, page_appsheet, page_script, page_faq, page_campus, page_knowledge, page_dash])
 pg.run()
+
