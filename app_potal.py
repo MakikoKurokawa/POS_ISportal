@@ -24,7 +24,7 @@ import streamlit as st
 
 # --- ページ基本設定 ---
 st.set_page_config(
-    page_title="POS_ISコックピット",
+    page_title="POS_ISポータル",
     page_icon="📞",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -75,8 +75,6 @@ page_script = st.Page(show_script, title="📞 動的スクリプト")
 page_faq = st.Page(show_faq, title="🔍 FAQ・カウンタートーク")
 page_knowledge = st.Page(show_knowledge, title="📝 ナレッジ共有フォーム")
 page_dash = st.Page(show_dashboard, title="📊 実績ダッシュボード＆日報")
-
-st.sidebar.markdown("---")
 
 pg = st.navigation([page_home, page_onbo, page_appsheet, page_script, page_faq, page_campus, page_knowledge, page_dash])
 pg.run()
