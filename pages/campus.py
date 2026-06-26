@@ -8,7 +8,7 @@ from io import StringIO
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1M9PwHaNywxZEd1LyKj76lMW82R05pDKUArc6Ni4LaUc/edit?usp=sharing"
 
 # --- キャッシュによるデータ読み込み関数 ---
-@st.cache_data(ttl="24h") 
+@st.cache_data
 def load_campus_master_safe(url):
     try:
         csv_url = url.split("/edit")[0] + "/gviz/tq?tqx=out:csv"
