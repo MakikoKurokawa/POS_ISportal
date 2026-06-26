@@ -30,10 +30,6 @@ def load_campus_master_safe(url):
 # データの読み込み
 df_campus = load_campus_master_safe(SPREADSHEET_URL)
 
-
-
-# --- 信号機・行の色付けロジック ---
-
 # --- 信号機・行の色付けロジック ＆ 表の見た目調整 ---
 def style_campus_df(df):
     # 画面の表（メイン一覧）に見せたい列「だけ」を順番通りに指定
@@ -95,6 +91,16 @@ def style_campus_df(df):
 
 # --- 画面のメイン表示処理 ---
 st.title("🏫 校舎ステータス一覧 ＆ スケジュール調整")
+
+# --- メイン画面：校舎一覧表の表示 ---
+    st.subheader("🏫 全校舎ステータス一覧")
+    
+    # 💡 【修正】 height=600 を追加して、縦幅を約2倍（20行〜25行がスクロールなしで見える大きさ）に広げます！
+    st.dataframe(
+        styled_df, 
+        use_container_width=True,
+        height=600
+    )
 
 if df_campus.empty:
     st.warning("スプレッドシートからデータが読み込めなかったため、一覧を表示できません。")
