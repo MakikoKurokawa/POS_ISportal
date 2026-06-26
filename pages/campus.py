@@ -120,18 +120,34 @@ else:
         
     c_info = df_campus[df_campus["校舎名"] == selected_campus].iloc[0]
     
-    col_d1, col_d2 = st.columns(2)
+col_d1, col_d2 = st.columns(2)
     with col_d1:
         st.markdown(f"#### 📢 {selected_campus} のディレクション")
-        st.error(f"**【全体受付状況】** {c_info.get('受付状況', '未設定')}\n\n👉 {c_info.get('校舎ディレクション', '特になし')}")
-        st.warning(f"**【中学生の受付】** {c_info.get('中学生受付', '未設定')}\n\n👉 {c_info.get('中学生ディレクション', '特になし')}")
+        
+        # 💡 【改行対策】 .replace('\n', '\n\n') をつけて改行を強制認識させます
+        k_direction = str(c_info.get('校舎ディレクション', '特になし')).replace('\n', '\n\n')
+        j_direction = str(c_info.get('中学生ディレクション', '特になし')).replace('\n', '\n\n')
+        
+        st.error(f"**【全体受付状況】** {c_info.get('受付状況', '未設定')}\n\n👉 {k_direction}")
+        st.warning(f"**【中学生の受付】** {c_info.get('中学生受付', '未設定')}\n\n👉 {j_direction}")
+        
     with col_d2:
         st.markdown("#### 📱 アクセス・基本情報")
+        
+        # 💡 【改行対策】 住所や最寄り駅、開校時間も改行に対応
+        station = str(c_info.get('最寄り駅', '未設定')).replace('\n', '\n\n')
+        address = str(c_info.get('住所', '未設定')).replace('\n', '\n\n')
+        open_time = str(c_info.get('開校時間', '未設定'))
+        study_time = str(c_info.get('自習室利用時間', '未設定'))
+        mendan_time = str(c_info.get('面談可能時間', '未設定'))
+        
         st.success(f"""
-        * **最寄り駅:** {c_info.get('最寄り駅', '未設定')} (開校: {c_info.get('開校時間', '未設定')} / 自習室: {c_info.get('自習室利用時間', '未設定')})
-        * **面談可能時間:** {c_info.get('面談可能時間', '未設定')}
-        * **住所:** {c_info.get('住所', '未設定')}
+        * **最寄り駅:** {station}  
+          (開校: {open_time} / 自習室: {study_time})
+        * **面談可能時間:** {mendan_time}
+        * **住所:** {address}
         """)
+        
         col_btn1, col_btn2 = st.columns(2)
         if pd.notna(c_info.get('Googleマップ')) and str(c_info.get('Googleマップ')).startswith("http"):
             col_btn1.link_button("🗺️ Googleマップで開く", c_info['Googleマップ'], use_container_width=True)
@@ -142,12 +158,6 @@ else:
     st.markdown(f"### 👥 {selected_campus} スケジュール＆会議室 一元確認（特大合体ビュー）")
     
     if pd.notna(c_info.get('担当者に関する備考欄')) and str(c_info['担当者に関する備考欄']).strip() != "":
-        st.warning(f"🚗 **【担当者に関する備考・移動注意】**\n\n{c_info['担当者に関する備考欄']}")
-
-    combined_url = c_info.get("カレンダーURL")
-
-    if pd.notna(combined_url) and str(combined_url).startswith("http"):
-        st.caption("💡 複数のカレンダー・会議室の予定が1つの画面に重なって表示されています。")
-        st.components.v1.iframe(str(combined_url).strip(), height=750, scrolling=True)
-    else:
-        st.info("この校舎の「カレンダーURL」列に有効なURLが登録されていません。スプレッドシートを確認してください。")
+        # 💡 【改行対策】 一番もどかしかった「担当者に関する備考欄」の改行もこれで完璧に再現！
+        bikou = str(c_info['担当者に関する備考欄']).replace('\n', '\n\n')
+        st.warning(f"🚗 **【担当者に関する備考・移動注意】**\n\n{bikou}")
