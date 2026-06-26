@@ -8,18 +8,23 @@ from io import StringIO
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRNLGbIj6c_sWtQUqLBgywLhDH1dec1OkUr4mG21XRXWU7_DoMfIGrj-S3xyp_aDjSUmXJ4_ZvGitfz/pubhtml"
 
 # --- キャッシュによるデータ読み込み関数 ---
-# ttl="24h" を消して、メイン側の「最新化ボタン」でいつでも爆破できるようにします！
 @st.cache_data
 def load_campus_master_safe(url):
     try:
-        # 🟢 修正：ウェブ公開URLをそのまま使ってrequestsを飛ばします
+        # 💡 複雑なURL変換や、時間泥棒コードはエラーの元になるので全削除！
+        # 引数で渡されたURL（ウェブ公開用のURL）をそのまま実直に使います。
         csv_url = url
         
-        # Googleのサボり防止コード（これは残しておいてOKです）
-        import time
-        csv_url += f"&_cache_bust={int(time.time())}"
-        
         response = requests.get(csv_url, timeout=5)
+        if response.status_code == 200:
+            df = pd.read_csv(StringIO(response.text))
+            df.columns = df.columns.str.strip()
+            return df
+        else:
+            return pd.DataFrame()
+    except Exception as e:
+        return pd.DataFrame()
+
 # データの読み込み
 df_campus = load_campus_master_safe(SPREADSHEET_URL)
 
