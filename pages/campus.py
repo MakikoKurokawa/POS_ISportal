@@ -32,14 +32,27 @@ def load_campus_master_safe(url):
 df_campus = load_campus_master_safe(SPREADSHEET_URL)
 
 # --- 信号機・行の色付けロジック ---
+
 def style_campus_df(df):
+    # 💡 【修正】画面の表（メイン一覧）に見せたい列「だけ」を順番通りに指定します
+    # ※ここに書かれていない「校舎カレンダー」「カレンダーURL」「会議室①」「会議室②」は自動的に非表示になります！
     display_cols = [
-        "エリア", "校舎名", "校舎名(ふりがな)", "受付状況", "中学生受付", 
-        "中学生ディレクション", "校舎ディレクション", "担当者に関する備考欄", "最寄り駅"
+        "エリア", 
+        "校舎名", 
+        "校舎名(ふりがな)", 
+        "受付状況", 
+        "中学生受付", 
+        "中学生ディレクション", 
+        "校舎ディレクション", 
+        "担当者に関する備考欄", 
+        "最寄り駅"
     ]
+    
+    # スプシに存在する列だけを安全に抜き出す
     available_cols = [c for c in display_cols if c in df.columns]
     sub_df = df[available_cols].copy()
     
+    # 信号機（🔴や💛）による行の色付けルール
     def make_style(row):
         if "🔴" in str(row.get("受付状況", "")) or "❌" in str(row.get("中学生受付", "")):
             return ["background-color: #ffcccc; color: #330000; font-weight: bold;"] * len(row)
