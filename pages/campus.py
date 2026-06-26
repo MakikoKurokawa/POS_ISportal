@@ -36,6 +36,15 @@ def load_campus_master_safe(url):
 # データの読み込み
 df_campus = load_campus_master_safe(SPREADSHEET_URL)
 
+# 🕵️‍♂️ 【追加】エラーで止まる前に、Googleから届いたデータを画面にそのまま映し出す魔法
+st.write("--- 🛠️ デバッグ情報（Googleから届いた生データ） ---")
+st.write("届いたデータの行数:", len(df_campus))
+st.write("認識した列名の一覧:", list(df_campus.columns))
+st.write("データの先頭5行:")
+st.dataframe(df_campus.head())
+st.write("----------------------------------------------")
+
+
 # --- 信号機・行の色付けロジック ---
 
 def style_campus_df(df):
