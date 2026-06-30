@@ -143,7 +143,7 @@ else:
             col_btn2.link_button("🌐 公式HPの校舎ページ", c_info['HP'], use_container_width=True)
 
     st.markdown("---")
-    st.markdown(f"### 👥 {selected_campus} スケジュール＆会議室 一元確認（特大合体ビュー）")
+    st.markdown(f"### 👥 {selected_campus} スケジュール＆会議室")
     
     if pd.notna(c_info.get('担当者に関する備考欄')) and str(c_info['担当者に関する備考欄']).strip() != "":
         bikou = str(c_info['担当者に関する備考欄']).replace('\n', '<br>')
