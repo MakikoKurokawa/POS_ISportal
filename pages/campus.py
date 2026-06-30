@@ -113,7 +113,6 @@ else:
         k_direction = str(c_info.get('校舎ディレクション', '特になし')).replace('\n', '<br>')
         j_direction = str(c_info.get('中学生ディレクション', '特になし')).replace('\n', '<br>')
         
-        # 💡 太字の指定を ** から <b> に修正し、記号を消してスッキリさせました！
         st.markdown(f'<div style="background-color: #ffcccc; color: #330000; padding: 15px; border-radius: 5px; font-weight: normal;"><b>【全体受付状況】</b> {c_info.get("受付状況", "未設定")}<br><br>👉 {k_direction}</div>', unsafe_allow_html=True)
         st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
         st.markdown(f'<div style="background-color: #fff2cc; color: #332200; padding: 15px; border-radius: 5px; font-weight: normal;"><b>【中学生の受付】</b> {c_info.get("中学生受付", "未設定")}<br><br>👉 {j_direction}</div>', unsafe_allow_html=True)
@@ -154,3 +153,12 @@ else:
         {bikou}
         </div>
         """, unsafe_allow_html=True)
+
+    # 🔗 【ここから下を完全復活させました！】
+    combined_url = c_info.get("カレンダーURL")
+
+    if pd.notna(combined_url) and str(combined_url).startswith("http"):
+        st.caption("💡 複数のカレンダー・会議室の予定が1つの画面に重なって表示されています。")
+        st.components.v1.iframe(str(combined_url).strip(), height=750, scrolling=True)
+    else:
+        st.info("この校舎の「カレンダーURL」列に有効なURLが登録されていません。スプレッドシートを確認してください。")
