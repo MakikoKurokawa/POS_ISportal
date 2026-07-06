@@ -31,7 +31,7 @@ df_campus = load_campus_master_safe(SPREADSHEET_URL)
 
 # --- 信号機・行の色付けロジック ＆ 表の見た目調整 ---
 def style_campus_df(df):
-    # 💡 「東西」を一番最初に見せるように指定しました！
+    # 画面の表に見せたい列（「東西」は非表示）
     display_cols = [
         "エリア", 
         "校舎名", 
@@ -54,21 +54,32 @@ def style_campus_df(df):
         status = str(row.get("受付状況", ""))
         jr_status = str(row.get("中学生受付", ""))
         
-        # ルール①：受付状況が🔴や❌のときは、1行まるまる網掛け
+        # ルール①：受付状況が🔴や❌のときは、今まで通りの「薄い赤色」網掛け
         if "🔴" in status or "❌" in status:
             style_df.loc[idx] = "background-color: #ffcccc; color: #330000; font-weight: bold;"
-        # 受付状況が💛などの警告色のときも、1行まるまる薄黄色
+            
+        # -------------------------------------------------------------
+        # 【新ルール】受付状況が「🟡条件あり」のときは、「マイルドなオレンジ色」網掛け！
+        # 💡 これで赤（停止）と黄色（警告）の中間のニュアンスになります
+        # -------------------------------------------------------------
+        elif "🟡" in status:
+            # 薄いオレンジ色。赤ほどきつくなく、警告よりは目立ちます
+            style_df.loc[idx] = "background-color: #fbe5d6; color: #663300; font-weight: bold;"
+            
+        # 受付状況が💛などの警告色のとき（🔴❌🟡以外）は、1行まるまる薄黄色
         elif "💛" in status:
             style_df.loc[idx] = "background-color: #fff2cc; color: #332200; font-weight: bold;"
             
+        # -------------------------------------------------------------
         # ルール②：中学生受付が❌のときは、「中学生」に関する列だけ網掛け
+        # (ここから下はそのまま！）
+        # -------------------------------------------------------------
         if "❌" in jr_status:
             jr_style = "background-color: #fce4d6; color: #c00000; font-weight: bold; border: 1px solid #c00000;"
             if "中学生受付" in style_df.columns:
                 style_df.loc[idx, "中学生受付"] = jr_style
             if "中学生ディレクション" in style_df.columns:
                 style_df.loc[idx, "中学生ディレクション"] = jr_style
-        # 中学生受付が💛や📘のときも、中学生の列だけを薄黄色に
         elif "💛" in jr_status or "📘" in jr_status:
             jr_warn_style = "background-color: #fff2cc; color: #332200; font-weight: bold;"
             if "中学生受付" in style_df.columns:
@@ -77,8 +88,7 @@ def style_campus_df(df):
                 style_df.loc[idx, "中学生ディレクション"] = jr_warn_style
 
     return sub_df.style.apply(lambda _: style_df, axis=None)
-
-
+    
 # --- 画面のメイン表示処理 ---
 st.title("🏫 校舎ステータス一覧 ＆ スケジュール調整")
 
