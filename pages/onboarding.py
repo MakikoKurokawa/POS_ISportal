@@ -290,7 +290,7 @@ with tab3:
     """)
 
     st.markdown("#### 📖 参考資料")
-    col_link1, col_link2, col_link3 = st.columns(2)
+    col_link1, col_link2, col_link3 = st.columns(3)
 
     with col_link1:
         st.link_button("🌐 武田塾 公式ホームページ", "https://www.takeda.tv/about/", use_container_width=True)
