@@ -33,7 +33,6 @@ df_campus = load_campus_master_safe(SPREADSHEET_URL)
 def style_campus_df(df):
     # 💡 「東西」を一番最初に見せるように指定しました！
     display_cols = [
-        "東西",
         "エリア", 
         "校舎名", 
         "校舎名(ふりがな)", 
