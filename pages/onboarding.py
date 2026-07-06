@@ -1,299 +1,178 @@
+# pages/campus.py
 import streamlit as st
+import pandas as pd
+import requests
+from io import StringIO
 
-# ページタイトル
-st.title("📖 オンボーディング・基礎研修資料")
-st.caption("インサイドセールス（IS）としての一歩を踏み出すための基礎知識集です。")
-st.markdown("---")
+# --- 🚨 スプレッドシートの共有URLを設定 🚨 ---
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRNLGbIj6c_sWtQUqLBgywLhDH1dec1OkUr4mG21XRXWU7_DoMfIGrj-S3xyp_aDjSUmXJ4_ZvGitfz/pub?gid=628921947&single=true&output=csv"
 
-# 4つのタブを作成
-tab1, tab2, tab3, tab4 = st.tabs([
-    "🏢 会社概要・事業概要など",
-    "📊 面談率とは",
-    "🏫 武田塾について",
-    "✏️ 塾業界について"
-])
-
-# =========================================================================
-# タブ1: 会社概要・事業概要など
-# =========================================================================
-with tab1:
-    st.header("🏢 会社・事業概要 ＆ 初期マニュアル")
-    
-    st.markdown("### 🗺️ クルイトの事業部構成")
-    st.info("インサイドセールス（IS）グループは、全事業部の成長を支える重要な「機能」として位置づけられています。")
-
-    # 事業部と機能の構造を整理
-    col_div, col_func = st.columns(2)
-    with col_div:
-        st.markdown("#### 🚀 各事業部")
-        st.markdown("""
-        * [**武田塾 事業部 (POS)**](https://www.takeda.tv/)
-        * [**キミノスクール 事業部 (SLEG)**](https://kimino-school.com/)
-        * [**キミノ高等学院 事業部 (CELF)**](https://kimino-school.com/gakuen/)
-        * **ライフデザイン事業部 (LD)**
-        """)
-    with col_func:
-        st.markdown("#### ⚙️ 社内機能・部門")
-        st.markdown("""
-        * **スクールマーケティング部**
-          *  **マーケティンググループ** （WEB集客・HP運営）
-          *  **コールグループ (IS)** 📞
-        * **HR部**
-        * **コーポレート部**
-        """)
-    st.markdown("---")
-    st.markdown("### 📞 私たちの役割（インサイドセールスとは？）")
-    st.markdown("一言でいうと、私たちは **「WEB集客（マーケティング）」と「各事業部の現場（校舎など）」を繋ぐ、全社横断のバトンリレーの第2走者** です。")
-    
-    # 3カラムで全社的なバトンリレーを可視化
-    col_role1, col_role2, col_role3 = st.columns(3)
-    with col_role1:
-        st.markdown("<div style='text-align: center; font-size: 20px; font-weight: bold;'>① 集客</div>", unsafe_allow_html=True)
-        st.info("""
-        **マーケティンググループ**  
-        広告やHPを運用し、勉強に悩む生徒・保護者様からの「問い合わせ」という名のバトンを生み出す段階。
-        """)
-    with col_role2:
-        st.markdown("<div style='text-align: center; font-size: 20px; font-weight: bold;'>➡️ ② 繋ぐ（私たちのチーム）</div>", unsafe_allow_html=True)
-        st.error("""
-        **コールグループ（IS）**  
-        マーケチームから受け取ったバトンを引き継ぎ、お電話でお客様の悩みを丁寧にヒアリングして、各事業部の現場へとお繋ぎする段階。
-        """)
-    with col_role3:
-        st.markdown("<div style='text-align: center; font-size: 20px; font-weight: bold;'>➡️ ③ 現場のサポート</div>", unsafe_allow_html=True)
-        st.success("""
-        **各事業部の現場（武田塾の校舎など）**  
-        私たちが繋いだお客様と直接面談（受験相談など）を行い、一人ひとりに合わせた具体的な入会・通塾のサポートを行う段階。
-        """)
-
-    st.markdown("""
-    > ### 💡 全社を支えるISの重要性
-    > 私たちのチームは、特定の事業部だけに閉じこもるのではなく、 **すべての事業部のお客様を各現場へと繋ぐ「全社横断の窓口」** としての役割を担っています。  
-    > どんなに良い広告（①）でお問い合わせをいただいても、私たちの電話（②）がなければ、お客様は現場（③）に足を運んでくれません。  
-    > 武田塾をはじめ、すべての事業の価値をお客様に届けるための非常に重要なポジションです。
-    """)
-    
-    st.markdown("---")
-    st.markdown("### 💬 主要Slackチャンネル一覧")
-    st.caption("まずは以下のチャンネルに参加し、業務の流れやアナウンスをチェックしてください。")
-    
-    col_sl1, col_sl2 = st.columns(2)
-    with col_sl1:
-        st.markdown("**【全事業部対象】**")
-        st.markdown("""
-        - `#general` (全体アナウンス)
-        - `#情シス問合せ窓口` (PC・アカウントトラブル)
-        - `#コーポレート問合せ窓口` (総務・労務関連)
-        - `#bo-アナウンスチャンネル`
-        - `#コールグループ_アルバイト`
-        """)
-    with col_sl2:
-        st.markdown("**【POS（武田塾）関連】**")
-        st.markdown("""
-        - `#pos_general`
-        - `#pos_contact` / `#pos_west_contact` (東・西の新規問い合わせ通知)
-        - `#pos_ぶち上げtelねん_面談率チーム`（日報提出、日々のコールに関する連絡など）
-        - `#pos_callcenter`（たまに重要なディレクションが流れる）
-        - `#pos_メール`
-        - `#pos_資料送付依頼チャンネル`
-        """)
-
-    st.markdown("---")
-    st.markdown("### 🚨 今日中に必ず対応してほしいこと")
-    
-    # 業務開始時のチェックリスト
-    st.checkbox("1. セキュリティ研修 ＆ KOTレクチャー（一柳さん（主任）と実施）")
-    st.checkbox("2. 各種初期登録の対応（レクチャー後に実施）")
-    st.checkbox("3. Slackのプロフィール写真を変更（プライベートメールから画像添付 ➡️ 設定）")
-    st.checkbox("4. #pos_general での自己紹介投稿")
-
-    st.markdown("---")
-    st.markdown("### 🛠️ 業務で使用する主要ツール・資料")
-    # 🔗 それぞれのマニュアルのURLをリンクとして埋め込みました
-    st.markdown("""
-    * [**Appsheet（問合せ管理表）**](https://www.appsheet.com/start/6f2ce284-d4c2-47cc-9508-10f62ec68a5b?newUser=true&onboarding=true&platform=desktop#appName=%E3%80%90appsheet%E3%80%91%E5%95%8F%E5%90%88%E7%AE%A1%E7%90%86-737216964&vss=H4sIAAAAAAAAA6WOsQ7CIBRF_-XOfAGrcTBGF42LOGB5TYgtNIWqDWF308VP7H8IVuPcOL7zcu69AWdNl42XxQl8H37XknpwBIFt35AAF5hZ41tbCTCBtaxHODzvw-MmEBEP7Gt7cuBhisz_aWbQiozXpaY2J2UvJXys9M5OAqOByFB3Xh4rek9NRoyJlbboHKldmjG53i3M_NpIo1ZWpcBSVo7iCx3QRY5bAQAA&view=%E5%95%8F%E5%90%88)
-    * [**CallCenter業務シート**](https://docs.google.com/spreadsheets/d/1rMDVNAGBPTmZfiR6QyvRO1jND6ZJd6qCGStk3Bo_Wro/edit?usp=sharing)
-    * [**面談設定マニュアル（CCトークスクリプト）**](https://docs.google.com/spreadsheets/d/18Am2fbTAfrBuCF-lW1FYkNUU_alsfFqtjiscInIq68c/edit?usp=sharing)
-    """)
-
-# =========================================================================
-# タブ2: 面談率とは
-# =========================================================================
-with tab2:
-    st.header("📊 面談率の因数分解と本質的な意味")
-    
-    # なぜ追うのか？のパッションエリア
-    st.markdown("### ❓ なぜ、私たちは「面談率」を追うのか？")
-    col_ed, col_biz = st.columns(2)
-    with col_ed:
-        st.success("""
-        **🎓 教育目線での意義**
-        * **初期接点:** 問い合わせは、現状の勉強に悩み、道を模索している生徒・保護者様からの大切な「SOS」です。
-        * **唯一無二の機会:** 無料受験相談（面談）を設定できて初めて、私たちは武田塾の「自学自習の徹底管理」という教育価値を直接手渡せます。
-        * ⚠️ この接点を逃すことは、生徒が逆転合格へ踏み出す未来の可能性（機会損失）を奪うことと同義です。
-        """)
-    with col_biz:
-        st.warning("""
-        **📈 営利・事業目線での意義**
-        * **最重要プロセス:** 「問い合わせ ➡️ 面談 ➡️ 入会」というファネルの中で、面談設定は絶対に外せない超重要ボトルネックです。
-        * **事業成長の最大レバー:** 面談率が向上すれば、入会数も比例して増加します。事業の拡大は、より優れた教育環境を還元する原資となります。
-        """)
-
-    st.markdown("---")
-    st.markdown("### 📐 面談率の定義と計算式")
-    
-    # 数式を綺麗に表示
-    st.info("💡 **面談率 (%) = 面談設定数 ÷ 問い合わせ数 × 100**")
-    st.caption("問い合わせ総数に対し、無料受験相談（面談）に実際につながった割合を、東日本・西日本それぞれで集計します。")
-    
-    # 目標値のテーブル化
-    st.markdown("#### 🎯 エリア別数値目標（OKR）")
-    st.table({
-        "エリア": ["東日本", "西日本"],
-        "ベース目標": ["65% 前後", "60% 前後"],
-        "OKR目標": ["70% 前後", "65% 前後"]
-    })
-
-    st.markdown("---")
-    st.markdown("### 🔍 課題特定の視点：2つの主軸")
-    st.markdown("数値が伸び悩んでいる時、**通電率**と**面談設定率**のどちらにボトルネックがあるかを切り分けます。")
-    
-    col_tuden, col_settei = st.columns(2)
-    with col_tuden:
-        st.markdown("#### ① 通電率の課題（通電数 ÷ 問合数）")
-        st.markdown("""
-        * **架電の質:** 適切な回数、効果的な時間帯にかけられているか？
-        * **即電対応:** 問い合わせ直後の「即電」が行われていたか？
-        * **マルチチャネル:** メールやSMSの送信頻度・内容は効果的か？
-        """)
-        st.caption("※使用ツール: Dialpad, 営業スマホ, 校舎電話, メール, SMS")
+# --- キャッシュによるデータ読み込み関数 ---
+@st.cache_data
+def load_campus_master_safe(url):
+    try:
+        csv_url = url
         
-    with col_settei:
-        st.markdown("#### ② 面談設定率の課題（面談設定数 ÷ 通電数）")
-        st.markdown("""
-        * **トークの納得感:** 誰が架電しても、校舎の魅力や信頼関係を築けるトークができていたか？
-        * **キャンセル対策:** 予約後のキャンセル発生状況の確認や、事前架電（リマインド）ができているか？
-        """)
+        # 文字化け対策
+        response = requests.get(csv_url, timeout=5)
+        response.encoding = 'utf-8'
+        
+        if response.status_code == 200:
+            df = pd.read_csv(StringIO(response.text))
+            df.columns = df.columns.str.strip()
+            return df
+        else:
+            return pd.DataFrame()
+    except Exception as e:
+        return pd.DataFrame()
 
-    st.markdown("---")
-    st.markdown("### 👥 顧客の検討段階による特性（問合種別）")
-    st.markdown("""
-    - **面談希望（HP(本社HP)、クルイトLP、直電など）**
-        - 受験相談や体験を求めており感度が高い。通電率・面談設定率ともに高くなる傾向。
-    - **資料希望（クルイトLP、塾ナビなどのポータル）**
-        - 複数塾を比較・情報収集している段階。他塾検討や塾自体の感度が低いため、数値は低めになりやすい。
-    """)
-    st.error("💡 どちらの希望経路が現状の要因になっているかを見極め、適切なアプローチを講じましょう！")
+# データの読み込み
+df_campus = load_campus_master_safe(SPREADSHEET_URL)
+
+# --- 信号機・行の色付けロジック ＆ 表の見た目調整 ---
+def style_campus_df(df):
+    # 💡 「東西」を一番最初に見せるように指定しました！
+    display_cols = [
+        "東西",
+        "エリア", 
+        "校舎名", 
+        "校舎名(ふりがな)", 
+        "受付状況", 
+        "中学生受付", 
+        "中学生ディレクション", 
+        "校舎ディレクション", 
+        "担当者に関する備考欄", 
+        "最寄り駅"
+    ]
+    
+    available_cols = [c for c in display_cols if c in df.columns]
+    sub_df = df[available_cols].copy()
+    
+    # 🎨 空っぽのスタイル用の枠組みを作る
+    style_df = pd.DataFrame("", index=sub_df.index, columns=sub_df.columns)
+    
+    for idx, row in sub_df.iterrows():
+        status = str(row.get("受付状況", ""))
+        jr_status = str(row.get("中学生受付", ""))
+        
+        # ルール①：受付状況が🔴や❌のときは、1行まるまる網掛け
+        if "🔴" in status or "❌" in status:
+            style_df.loc[idx] = "background-color: #ffcccc; color: #330000; font-weight: bold;"
+        # 受付状況が💛などの警告色のときも、1行まるまる薄黄色
+        elif "💛" in status:
+            style_df.loc[idx] = "background-color: #fff2cc; color: #332200; font-weight: bold;"
+            
+        # ルール②：中学生受付が❌のときは、「中学生」に関する列だけ網掛け
+        if "❌" in jr_status:
+            jr_style = "background-color: #fce4d6; color: #c00000; font-weight: bold; border: 1px solid #c00000;"
+            if "中学生受付" in style_df.columns:
+                style_df.loc[idx, "中学生受付"] = jr_style
+            if "中学生ディレクション" in style_df.columns:
+                style_df.loc[idx, "中学生ディレクション"] = jr_style
+        # 中学生受付が💛や📘のときも、中学生の列だけを薄黄色に
+        elif "💛" in jr_status or "📘" in jr_status:
+            jr_warn_style = "background-color: #fff2cc; color: #332200; font-weight: bold;"
+            if "中学生受付" in style_df.columns:
+                style_df.loc[idx, "中学生受付"] = jr_warn_style
+            if "中学生ディレクション" in style_df.columns:
+                style_df.loc[idx, "中学生ディレクション"] = jr_warn_style
+
+    return sub_df.style.apply(lambda _: style_df, axis=None)
 
 
-# =========================================================================
-# タブ3: 武田塾について
-# =========================================================================
-with tab3:
-    st.header("🏫 武田塾について理解しよう！")
-    st.caption("お客様にお電話をする私たちがまず知っておくべき「武田塾の画期的なシステムと強み」を解説します。武田塾がなぜ「逆転合格」を続出させることができるのか、その秘密を理解しましょう！")
+# --- 画面のメイン表示処理 ---
+st.title("🏫 校舎ステータス一覧 ＆ スケジュール調整")
+
+if df_campus.empty:
+    st.warning("スプレッドシートからデータが読み込めなかったため、一覧を表示できません。")
+else:
+    st.markdown("### 🚨 【即電対応】全校舎 受付・アクセス状況一覧")
+    
+    # 💡 【重要】「東日本」「西日本」のタブを作成します！
+    tab_east, tab_west = st.tabs(["🗺️ 東日本エリア", "🗺️ 西日本エリア"])
+    
+    # --- 1. 東日本タブの中身 ---
+    with tab_east:
+        # スプシの「東西」列が「東日本」のデータだけを絞り込む（未入力なら東日本扱いにする安全策付き）
+        df_east = df_campus[(df_campus["東西"] == "東日本") | (df_campus["東西"].isna()) | (df_campus["東西"] == "")]
+        if not df_east.empty:
+            styled_east = style_campus_df(df_east)
+            st.dataframe(styled_east, use_container_width=True, hide_index=True, height=600)
+        else:
+            st.info("東日本に該当する校舎がありません。")
+            
+    # --- 2. 西日本タブの中身 ---
+    with tab_west:
+        # スプシの「東西」列が「西日本」のデータだけを絞り込む
+        df_west = df_campus[df_campus["東西"] == "西日本"]
+        if not df_west.empty:
+            styled_west = style_campus_df(df_west)
+            st.dataframe(styled_west, use_container_width=True, hide_index=True, height=600)
+        else:
+            st.info("西日本に該当する校舎データがありません。スプレッドシートの「東西」列を確認してください。")
     
     st.markdown("---")
+    st.markdown("### 📅 カレンダー一元確認 ＆ 詳細アクセス情報")
     
-    # 1. 一言でいうと
-    st.markdown("### 1. 武田塾を一言でいうと？")
-    st.error(" **「日本初！授業をしない。徹底管理の個別指導塾」** ")
-    st.markdown("""
-    塾なのに授業をしないなんて驚かれますが、授業をしない代わりに **「自学自習」** を徹底的に管理・サポートすることで、数々の逆転合格を生み出しています。
-    """)
+    col_select, _ = st.columns([1, 2])
+    with col_select:
+        campus_list = df_campus["校舎名"].dropna().tolist()
+        selected_campus = st.selectbox("詳細スケジュールを確認する校舎を選択", campus_list)
+        
+    c_info = df_campus[df_campus["校舎名"] == selected_campus].iloc[0]
+
+    col_d1, col_d2 = st.columns(2)
+    with col_d1:
+        st.markdown(f"#### 📢 {selected_campus} のディレクション")
+        
+        k_direction = str(c_info.get('校舎ディレクション', '特になし')).replace('\n', '<br>')
+        j_direction = str(c_info.get('中学生ディレクション', '特になし')).replace('\n', '<br>')
+        
+        st.markdown(f'<div style="background-color: #ffcccc; color: #330000; padding: 15px; border-radius: 5px; font-weight: normal;"><b>【全体受付状況】</b> {c_info.get("受付状況", "未設定")}<br><br>👉 {k_direction}</div>', unsafe_allow_html=True)
+        st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="background-color: #fff2cc; color: #332200; padding: 15px; border-radius: 5px; font-weight: normal;"><b>【中学生の受付】</b> {c_info.get("中学生受付", "未設定")}<br><br>👉 {j_direction}</div>', unsafe_allow_html=True)
+        
+    with col_d2:
+        st.markdown("#### 📱 アクセス・基本情報")
+        
+        station = str(c_info.get('最寄り駅', '未設定')).replace('\n', '<br>')
+        address = str(c_info.get('住所', '未設定')).replace('\n', '<br>')
+        open_time = str(c_info.get('開校時間', '未設定')).replace('\n', '<br>')
+        study_time = str(c_info.get('自習室利用時間', '未設定')).replace('\n', '<br>')
+        mendan_time = str(c_info.get('面談可能時間', '未設定')).replace('\n', '<br>')
+        
+        st.markdown(f"""
+        <div style="background-color: #d1e7dd; color: #0f5132; padding: 15px; border-radius: 5px;">
+        📌 <b>最寄り駅:</b> {station}<br>
+        (開校: {open_time} / 自習室: {study_time})<br><br>
+        📌 <b>面談可能時間:</b> {mendan_time}<br><br>
+        📌 <b>住所:</b> {address}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True)
+        col_btn1, col_btn2 = st.columns(2)
+        if pd.notna(c_info.get('Googleマップ')) and str(c_info.get('Googleマップ')).startswith("http"):
+            col_btn1.link_button("🗺️ Googleマップで開く", c_info['Googleマップ'], use_container_width=True)
+        if pd.notna(c_info.get('HP')) and str(c_info.get('HP')).startswith("http"):
+            col_btn2.link_button("🌐 公式HPの校舎ページ", c_info['HP'], use_container_width=True)
 
     st.markdown("---")
+    st.markdown(f"### 👥 {selected_campus} スケジュール＆会議室 一元確認（特大合体ビュー）")
     
-    # 2. なぜ授業をしないのか
-    st.markdown("### 2. なぜ「授業」をしないのか？")
-    st.markdown("学習において成績を上げるためには、 **「わかる」「やってみる」「できる」** の3ステップが必要です。")
-    
-    # 💡 修正：ボックス内でステップ名と説明文が改行されるように調整しました
-    col_st1, col_st2, col_st3 = st.columns(3)
-    with col_st1:
-        st.info("""
-        **【ステップ1】 わかる**  
-        学校や予備校の授業を聞いて、内容を理解する段階。
-        """)
-    with col_st2:
-        st.success("""
-        **【ステップ2】 やってみる**  
-        学んだことをもとに、実際に自分で問題を解いてみる段階。
-        """)
-    with col_st3:
-        st.warning("""
-        **【ステップ3】 できる**  
-        何度も繰り返し復習し、自力で完璧に解けるようになる段階。
-        """)
-        
-    st.markdown("""
-    一般的な塾や予備校の授業は、最初の **「わかる」の段階までしかやってくれません。** しかし、本当に成績が上がるのは、自分で手を動かす **「やってみる」「できる」の自学自習の時間** なのです。
-    """)
+    if pd.notna(c_info.get('担当者に関する備考欄')) and str(c_info['担当者に関する備考欄']).strip() != "":
+        bikou = str(c_info['担当者に関する備考欄']).replace('\n', '<br>')
+        st.markdown(f"""
+        <div style="background-color: #fff3cd; color: #664d03; padding: 15px; border-radius: 5px; border-left: 5px solid #ffc107;">
+        🚗 <b>【担当者に関する備考・移動注意】</b><br><br>
+        {bikou}
+        </div>
+        """, unsafe_allow_html=True)
 
-    # 💡 修正：グレーの引用をやめ、視認性の高い黒文字の警告カードに変更しました
-    st.warning("""
-    ⚠️ **授業の最大のリスク**  
-    おもしろい授業を聞いただけで **「やったつもり」** になってしまうこと。だからこそ武田塾は、無意味な授業を完全撤廃し、成績アップに直結する「自学自習」の時間を徹底的にサポートします。
-    """)
-   
-    st.markdown("---")
+    combined_url = c_info.get("カレンダーURL")
 
-    # 3. 4つの強み
-    st.markdown("### 3. 武田塾の「ここがすごい！」4つの強み")
-    
-    with st.expander("🚀 ① 最強最速の勉強法「一冊を完璧に！」"):
-        st.markdown("""
-        集団授業でみんなと同じペースで勉強していては、他の受験生を抜かして逆転合格することはできません。
-        学力を急激に上げる最強最速の勉強法は、**自分のレベルに合った参考書を一冊ずつ完璧にすること**です。
-        
-        * 予備校の授業では1週間に1章しか進まない英文法でも、参考書を使って自学自習をすれば**8倍の速さ**で進めることができ、圧倒的なペースで他の受験生を追い抜くことができます。
-        """)
-        
-    with st.expander("🗺️ ② 完全オーダーメイドの「特訓カリキュラム（ルート）」"):
-        st.markdown("""
-        武田塾には、市販の参考書をすべて分析して作られた **「ルート」** と呼ばれるカリキュラムがあります。
-        
-        * 一人ひとりの現在の成績や得意・苦手科目を分析し、志望校合格までに **「どの参考書を・どの順番で」** やればいいかをすべて洗い出し、完全オーダーメイドのカリキュラムを作成します。
-        * このルートがあることで、志望校までの道筋が一目でわかります。
-        """)
-        
-    with st.expander("⏱️ ③ 絶対にサボれない「自学自習の徹底管理」"):
-        st.markdown("""
-        家で勉強できない生徒の多くは「何を勉強すればいいか分からない」と悩んでいます。
-        
-        * **宿題を全指定:** 電子指導報告書を使って **「毎日、どの参考書の、どのページをやるか」** まで1日単位で宿題を全指定します。
-        * **忘却曲線に基づいたペース:** 人間は忘れる生き物であるという前提に基づき、 **「4日進んで2日復習する」** という最も知識が定着しやすいペースで宿題を組みます。
-        * これにより、生徒は「今日何をすべきか」一切迷わずに勉強に集中できます。
-        """)
-        
-    with st.expander("🔍 ④ 「できる」ようになるまで進ませない「確認テスト＆個別指導」"):
-        st.markdown("""
-        宿題を出して終わりではありません。本当に「できる」ようになったかを厳しくチェックします。
-        
-        * **確認テスト:** 毎週、宿題で指定した範囲と **「全く同じ問題」** からランダムでテストを実施します。ここで**80％以上**得点できないと、次の範囲に進めません（来週も同じ範囲をやり直します）。
-        * **個別指導:** テストの後は、1対1の個別指導を行います。ここでは単にわからない問題を教えるだけでなく、 **「答えの丸暗記になっていないか」「正しい勉強法ができているか」「プロセスを理解しているか」** を口頭で細かくチェックし、本質的な理解度を確認します [cite: 44, 111]。
-        """)
-
-    st.markdown("---")
-
-    # 4. こんな生徒を救います
-    st.markdown("### 📞 4. 武田塾はこんな生徒を救います！（架電で響くポイント）")
-    st.caption("お電話口の保護者様・生徒様が以下の特徴に当てはまる場合、武田塾の仕組みが劇的な効果を発揮します。")
-    
-    st.markdown("""
-    * 🛑 **大手予備校や映像授業に通っているのに成績が上がらない生徒**
-        * ➡️ 授業を受けっぱなしで「やったつもり」になっている可能性大。武田塾の「やってみる・できる」の管理で伸びます！
-    * 🛑 **家でまったく勉強しない、学習習慣がない生徒**
-        * ➡️ 「毎日何をやるか」を全指定し、確認テストでサボれない仕組みがあるため、無理やりでも机に向かうようになります！
-    * 🛑 **今の学力と志望校に大きなギャップがある（E判定の）生徒**
-        * ➡️ みんなと同じペースの授業ではなく、参考書を使った圧倒的なスピードの自学自習だからこそ「逆転合格」が間に合います！
-    """)
-
-
-
-# =========================================================================
-# タブ4: 塾業界について
-# =========================================================================
-with tab4:
-    st.header("✏️ 塾業界について")
-    st.info("⏳ Coming soon... （市場動向や競合他塾とのトーク比較などを今後追記予定）")
+    if pd.notna(combined_url) and str(combined_url).startswith("http"):
+        st.caption("💡 複数のカレンダー・会議室の予定が1つの画面に重なって表示されています。")
+        st.components.v1.iframe(str(combined_url).strip(), height=750, scrolling=True)
+    else:
+        st.info("この校舎の「カレンダーURL」列に有効なURLが登録されていません。スプレッドシートを確認してください。")
