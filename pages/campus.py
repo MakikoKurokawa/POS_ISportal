@@ -31,6 +31,7 @@ df_campus = load_campus_master_safe(SPREADSHEET_URL)
 
 # --- 信号機・行の色付けロジック ＆ 表の見た目調整 ---
 def style_campus_df(df):
+    # 画面の表に見せたい列（「東西」は非表示）
     display_cols = [
         "エリア", 
         "校舎名", 
@@ -53,21 +54,32 @@ def style_campus_df(df):
         status = str(row.get("受付状況", ""))
         jr_status = str(row.get("中学生受付", ""))
         
-        # ルール①：受付状況が🔴や❌のときは、1行まるまる網掛け
+        # ルール①：受付状況が🔴や❌のときは、今まで通りの「薄い赤色」網掛け
         if "🔴" in status or "❌" in status:
             style_df.loc[idx] = "background-color: #ffcccc; color: #330000; font-weight: bold;"
-        # 受付状況が💛などの警告色のときも、1行まるまる薄黄色
+            
+        # -------------------------------------------------------------
+        # 【新ルール】受付状況が「🟡条件あり」のときは、「マイルドなオレンジ色」網掛け！
+        # 💡 これで赤（停止）と黄色（警告）の中間のニュアンスになります
+        # -------------------------------------------------------------
+        elif "🟡" in status:
+            # 薄いオレンジ色。赤ほどきつくなく、警告よりは目立ちます
+            style_df.loc[idx] = "background-color: #fbe5d6; color: #663300; font-weight: bold;"
+            
+        # 受付状況が💛などの警告色のとき（🔴❌🟡以外）は、1行まるまる薄黄色
         elif "💛" in status:
             style_df.loc[idx] = "background-color: #fff2cc; color: #332200; font-weight: bold;"
             
+        # -------------------------------------------------------------
         # ルール②：中学生受付が❌のときは、「中学生」に関する列だけ網掛け
+        # (ここから下はそのまま！）
+        # -------------------------------------------------------------
         if "❌" in jr_status:
             jr_style = "background-color: #fce4d6; color: #c00000; font-weight: bold; border: 1px solid #c00000;"
             if "中学生受付" in style_df.columns:
                 style_df.loc[idx, "中学生受付"] = jr_style
             if "中学生ディレクション" in style_df.columns:
                 style_df.loc[idx, "中学生ディレクション"] = jr_style
-        # 中学生受付が💛や📘のときも、中学生の列だけを薄黄色に
         elif "💛" in jr_status or "📘" in jr_status:
             jr_warn_style = "background-color: #fff2cc; color: #332200; font-weight: bold;"
             if "中学生受付" in style_df.columns:
@@ -76,8 +88,7 @@ def style_campus_df(df):
                 style_df.loc[idx, "中学生ディレクション"] = jr_warn_style
 
     return sub_df.style.apply(lambda _: style_df, axis=None)
-
-
+    
 # --- 画面のメイン表示処理 ---
 st.title("🏫 校舎ステータス一覧 ＆ スケジュール調整")
 
@@ -86,15 +97,28 @@ if df_campus.empty:
 else:
     st.markdown("### 🚨 【即電対応】全校舎 受付・アクセス状況一覧")
     
-    styled_df = style_campus_df(df_campus)
+    # 💡 【重要】「東日本」「西日本」のタブを作成します！
+    tab_east, tab_west = st.tabs(["🗺️ 東日本エリア", "🗺️ 西日本エリア"])
     
-    # 縦幅を2倍（height=600）にして表示
-    st.dataframe(
-        styled_df, 
-        use_container_width=True, 
-        hide_index=True,
-        height=600
-    )
+    # --- 1. 東日本タブの中身 ---
+    with tab_east:
+        # スプシの「東西」列が「東日本」のデータだけを絞り込む（未入力なら東日本扱いにする安全策付き）
+        df_east = df_campus[(df_campus["東西"] == "東日本") | (df_campus["東西"].isna()) | (df_campus["東西"] == "")]
+        if not df_east.empty:
+            styled_east = style_campus_df(df_east)
+            st.dataframe(styled_east, use_container_width=True, hide_index=True, height=600)
+        else:
+            st.info("東日本に該当する校舎がありません。")
+            
+    # --- 2. 西日本タブの中身 ---
+    with tab_west:
+        # スプシの「東西」列が「西日本」のデータだけを絞り込む
+        df_west = df_campus[df_campus["東西"] == "西日本"]
+        if not df_west.empty:
+            styled_west = style_campus_df(df_west)
+            st.dataframe(styled_west, use_container_width=True, hide_index=True, height=600)
+        else:
+            st.info("西日本に該当する校舎データがありません。スプレッドシートの「東西」列を確認してください。")
     
     st.markdown("---")
     st.markdown("### 📅 カレンダー一元確認 ＆ 詳細アクセス情報")
@@ -143,7 +167,7 @@ else:
             col_btn2.link_button("🌐 公式HPの校舎ページ", c_info['HP'], use_container_width=True)
 
     st.markdown("---")
-    st.markdown(f"### 👥 {selected_campus} スケジュール＆会議室")
+    st.markdown(f"### 👥 {selected_campus} スケジュール＆会議室 一元確認（特大合体ビュー）")
     
     if pd.notna(c_info.get('担当者に関する備考欄')) and str(c_info['担当者に関する備考欄']).strip() != "":
         bikou = str(c_info['担当者に関する備考欄']).replace('\n', '<br>')
@@ -154,7 +178,6 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-    # 🔗 【ここから下を完全復活させました！】
     combined_url = c_info.get("カレンダーURL")
 
     if pd.notna(combined_url) and str(combined_url).startswith("http"):
