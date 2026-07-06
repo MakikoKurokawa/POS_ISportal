@@ -289,6 +289,7 @@ with tab3:
         * ➡️ みんなと同じペースの授業ではなく、参考書を使った圧倒的なスピードの自学自習だからこそ「逆転合格」が間に合います！
     """)
 
+    st.markdown("---")
     st.markdown("#### 📖 参考資料")
     col_link1, col_link2, col_link3 = st.columns(3)
 
