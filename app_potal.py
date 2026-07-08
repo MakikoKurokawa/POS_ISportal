@@ -68,7 +68,7 @@ else:
     page_onbo = st.Page("pages/onboarding.py", title="📖 オンボーディング・研修")
     page_campus = st.Page("pages/campus.py", title="🏫 校舎情報＆スケジュール")
     page_appsheet = st.Page(show_appsheet_manual, title="📱 AppSheet操作マニュアル")
-    page_script = st.Page(show_script, title="📞 動的スクリプト")
+    page_script = st.Page("pages/script.py", title="📞 スクリプト")
     page_faq = st.Page(show_faq, title="🔍 FAQ・カウンタートーク")
     page_knowledge = st.Page(show_knowledge, title="📝 ナレッジ共有フォーム")
     page_dash = st.Page(show_dashboard, title="📊 実績ダッシュボード＆日報")
