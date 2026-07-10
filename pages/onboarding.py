@@ -6,7 +6,7 @@ st.title("📖 オンボーディング・基礎研修資料")
 st.caption("インサイドセールス（IS）としての一歩を踏み出すための基礎知識集です。")
 st.markdown("---")
 
-# 💡 「塾業界について」のタブ名を「✏️ 受験・塾知識」に修正しました！
+# タブの作成
 tab1, tab2, tab3, tab4 = st.tabs([
     "🏢 会社概要・事業概要など",
     "🏫 武田塾について",
@@ -230,16 +230,17 @@ with tab2:
     with col_link3:
         st.link_button("🎬 社内動画：受験相談（むらしょーさん）", "https://drive.google.com/file/d/1wuyuBLYLsiIg6N0gDRtqltlzx7fs-Bi2/view", use_container_width=True)
 
-    # 🎬 【新機能追加】武田塾チャンネルのYouTube動画（埋め込み）
+    # 💡 【修正】YouTube動画2本を縦並びに配置しました！
     st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
     st.markdown("##### 📺 武田塾チャンネル 参考動画（まずは視聴してみましょう）")
-    col_v1, col_v2 = st.columns(2)
-    with col_v1:
-        st.caption("◆ 武田塾の仕組み・自学自習とは")
-        st.video("https://youtu.be/p_N_Ss1K2wA")
-    with col_v2:
-        st.caption("◆ 無料受験相談って何をするの？")
-        st.video("https://youtu.be/NJFbHyDeyeY")
+    
+    st.markdown("📊 **武田塾の仕組み・自学自習とは**")
+    st.video("https://youtu.be/p_N_Ss1K2wA")
+    
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+    
+    st.markdown("🤝 **無料受験相談って何をするの？**")
+    st.video("https://youtu.be/NJFbHyDeyeY")
 
 # =========================================================================
 # タブ3: 面談率とは
@@ -307,14 +308,15 @@ with tab4:
     
     st.markdown("---")
     
-    # 横並びで2本のYouTube動画をプレイヤーとして直接埋め込み！
-    col_v3, col_v4 = st.columns(2)
-    with col_v3:
-        st.subheader("💡 集団塾・映像塾・個別指導の違い")
-        st.caption("お客様が「今の塾で伸びない」と悩んでいる時のバックボーンを理解しましょう。")
-        st.video("https://youtu.be/zlHoub4ler0")
-        
-    with col_v4:
-        st.subheader("💡 受験知識の基本・よくある勘違い")
-        st.caption("電話口で「なるほど！」と思ってもらうための必須知識です。")
-        st.video("https://youtu.be/Gfn-biksPrs")
+    # 💡 【修正】こちらもYouTube動画2本を縦並びに変更しました！
+    st.subheader("💡 集団塾・映像塾・個別指導の違い")
+    st.caption("お客様が「今の塾で伸びない」と悩んでいる時のバックボーンを理解しましょう。")
+    st.video("https://youtu.be/zlHoub4ler0")
+    
+    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+    
+    st.subheader("💡 受験知識の基本・よくある勘違い")
+    st.caption("電話口で「なるほど！」と思ってもらうための必須知識です。")
+    st.video("https://youtu.be/Gfn-biksPrs")
