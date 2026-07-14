@@ -120,7 +120,7 @@ with col_left:
     st.subheader(f"📅 {selected_campus}校 週間スケジュール")
     
     # 1. 担当者情報の自動回収と色割り当て
-    staff_names = parse_staff_from_notes(campus_data.get('担当者に関する備考欄', '備考'))
+    staff_names = parse_staff_from_notes(campus_data.get('担当者に関する備考欄', '備考'), df_staff)
     
     # 優先度ごとの固定カラーコード（1番目:赤、2番目:青、3番目:緑）
     priority_colors = ["%23B1365F", "%232952A3", "%230D7813"]
