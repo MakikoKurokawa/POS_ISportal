@@ -286,7 +286,7 @@ with col_right:
     title_text = f"【受験相談＠{selected_campus}校】{clean_name(customer_name)}様"
     st.markdown(f"**生成されるタイトル:** `{title_text}`")
     
-    # 5. 登録実行ボタン
+# 5. 登録実行ボタン
     if st.button("📅 この内容でカレンダー・会議室を予約する", use_container_width=True, type="primary"):
         if not customer_name:
             st.error("❌ 顧客名を入力してください。")
@@ -297,32 +297,34 @@ with col_right:
             start_datetime = f"{appointment_date}T{start_time_str}:00"
             end_datetime = f"{appointment_date}T{end_time_str}:00"
             
-            # APIに送信する予定オブジェクトの作成（主催者のカレンダーに作り、担当者と会議室を招待する）
+            # APIに送信する予定オブジェクト
             event_body = {
                 'summary': title_text,
                 'description': '自動登録テストにより作成された面談予定です。',
                 'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
                 'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
-                'attendees': [
-                    {'email': selected_staff_id} # 担当者をゲスト招待
-                ]
             }
-            
-            # 会議室も選択されていれば招待枠に追加
-            if selected_room_id:
-                event_body['attendees'].append({'email': selected_room_id})
             
             # Googleカレンダーへ送信実行
             if service:
                 try:
-                    # 💡 主催者（ホスト）として、ロボット自身のカレンダー（primary）に予定を作成し、ゲストへ招待を送る
+                    # 💡 担当者自身のメインカレンダー（selected_staff_id）へ直接予定を書き込む
                     event = service.events().insert(
-                        calendarId='primary', 
-                        body=event_body,
-                        sendUpdates='all' # 招待相手にカレンダー通知メールを飛ばす設定
+                        calendarId=selected_staff_id, 
+                        body=event_body
                     ).execute()
-                    st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）と会議室にカレンダー招待を送信しました。")
+                    
+                    # 💡 会議室も選択されていれば、会議室カレンダー（selected_room_id）にも全く同じ予定を直接書き込む
+                    if selected_room_id:
+                        service.events().insert(
+                            calendarId=selected_room_id,
+                            body=event_body
+                        ).execute()
+                        st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）と会議室（{selected_room_name}）に予定を登録しました。")
+                    else:
+                        st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）に予定を登録しました。")
+                        
                 except Exception as e:
-                    st.error(f"Googleカレンダーへの登録中にエラーが発生しました: {e}")
+                    st.error(f"Googleカレンダーへの登録中にエラーが発生しました。\n※対象カレンダーにサービスアカウントが共有されているか確認してください。\n詳細: {e}")
             else:
-                st.info("👍 (デモ実行) 認証キーが設定されると、上記の内容で担当者と会議室へ同時に招待状が送信されます。")
+                st.info("👍 (デモ実行) 認証キーが設定されると、上記の内容で担当者と会議室へ同時に登録が実行されます。")
