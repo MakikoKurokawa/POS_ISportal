@@ -279,3 +279,55 @@ with col_right:
                     st.error(f"Googleカレンダーへの登録中にエラーが発生しました: {e}")
             else:
                 st.info("👍 (デモ実行) 認証キーが設定されると、上記の内容で担当者と会議室へ同時に招待状が送信されます。")
+
+
+def create_calendar_event_as_host(service_account_creds, host_calendar_id, start_time, end_time, title, staff_emails, room_emails=None):
+    """
+    主催者（サービスアカウント等のカレンダー）がイベントを作成し、
+    担当者や会議室を「ゲスト」として招待する（個別の共有設定が不要な方法）
+    """
+    from googleapiclient.discovery import build
+    
+    # 1. 認可サービスを立ち上げる
+    service = build('calendar', 'v3', credentials=service_account_creds)
+    
+    # 2. 招待するゲスト（担当者や会議室）のリストを作成
+    attendees = []
+    
+    # 担当者を追加
+    for email in staff_emails:
+        if email and "@" in email:
+            attendees.append({'email': email.strip()})
+            
+    # 会議室を追加（会議室も招待ゲストに入れれば、自動的にその部屋が確保されます！）
+    if room_emails:
+        for room_email in room_emails:
+            if room_email and "@" in room_email:
+                attendees.append({'email': room_email.strip()})
+                
+    # 3. イベントデータを作成
+    event_body = {
+        'summary': title,
+        'description': '自動登録テストにより作成された面談予定です。',
+        'start': {
+            'dateTime': start_time.isoformat(), # 例: "2026-07-14T10:00:00"
+            'timeZone': 'Asia/Tokyo',
+        },
+        'end': {
+            'dateTime': end_time.isoformat(),
+            'timeZone': 'Asia/Tokyo',
+        },
+        'attendees': attendees,
+        # 💡 ゲストへ自動的にカレンダーの招待メールを送信する設定
+        'sendUpdates': 'all', 
+    }
+    
+    # 4. 主催者（ホスト）のカレンダーに予定をインサート
+    # host_calendar_id には、サービスアカウント自身のメールアドレス（client_email）を指定すると確実です
+    event = service.events().insert(
+        calendarId=host_calendar_id, 
+        body=event_body,
+        sendUpdates='all'
+    ).execute()
+    
+    return event
