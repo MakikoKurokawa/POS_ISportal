@@ -70,7 +70,7 @@ def parse_staff_from_notes(notes, df_staff):
     first_line = str(notes).split('\n')[0].strip()
     
     # 2. 複数の区切り文字（＞, >, ・, ＆, &, 、, ,）に対応して分割
-    raw_names = re.split(r'＞|>|・|＆|&|＝|=|(|）|（|)|、|,', first_line)
+    raw_names = re.split(r'[\(（].*?[\)）|＞|>|・|＆|&|＝|=|(|）|（|)|、|,', first_line)
     cleaned_input_names = [clean_name(name) for name in raw_names if name.strip()]
     
     # 3. マスタ側の名前もお掃除し、文字数が長い順にソート（名字被り時の誤判定防止対策）
