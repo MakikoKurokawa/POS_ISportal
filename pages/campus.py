@@ -125,39 +125,62 @@ with col_left:
     # 優先度ごとの固定カラーコード（1番目:赤、2番目:青、3番目:緑）
     priority_colors = ["%23B1365F", "%232952A3", "%230D7813"]
     
+# =========================================================================
+    # 🎨 カレンダーURL合成処理（メールアドレス形式のみを許可して400エラーを防ぐ）
+    # =========================================================================
     calendar_urls = []
     found_staff_info = [] # 予約フォームの選択肢用
     
-    # 担当者マスタからIDを探してURLパラメータを作成
+    # 簡易メールアドレス判定用の正規表現
+    def is_valid_email(email_str):
+        if not email_str or pd.isna(email_str):
+            return False
+        return "@" in str(email_str)
+
+    # 1. 担当者カレンダーIDの処理
     for idx, name in enumerate(staff_names):
-        # 表記揺れに対応するため、マスタ側の名前もお掃除して完全一致比較
         matched_rows = df_staff[df_staff['担当者名'].apply(clean_name) == name]
         
         if not matched_rows.empty:
-            staff_id = matched_rows.iloc[0]['カレンダーID']
-            color = priority_colors[idx] if idx < len(priority_colors) else "%235B5B5B"
-            calendar_urls.append(f"&src={staff_id}&color={color}")
-            found_staff_info.append({"name": name, "id": staff_id})
+            staff_id = str(matched_rows.iloc[0]['カレンダーID']).strip()
+            # 💡 正しいメールアドレス形式の場合のみGoogleに送るURLに含める
+            if is_valid_email(staff_id):
+                color = priority_colors[idx] if idx < len(priority_colors) else "%235B5B5B"
+                calendar_urls.append(f"&src={staff_id}&color={color}")
+                found_staff_info.append({"name": name, "id": staff_id})
+            else:
+                st.warning(f"⚠️ 担当者「{name}」さんのカレンダーIDが正しいメールアドレス形式ではありません: {staff_id}")
         else:
-            st.warning(f"⚠️ 担当者マスタに「{name}」さんが登録されていません。")
+            # 1行目に注意事項（バッファなど）が紛れ込んでマスタにない場合は、警告を出さずに無視するか、優しく警告します
+            if name and not any(keyword in name for keyword in ["バッファ", "移動", "注意", "時間"]):
+                st.warning(f"⚠️ 担当者マスタに「{name}」さんが登録されていません。")
 
-    # 2. 会議室ID（K列・L列）の回収（会議室は地味なグレー「%23979797」で固定）
-    room_a_id = campus_data.get('会議室①') # K列
-    room_b_id = campus_data.get('会議室②') # L列
+    # 2. 会議室ID（K列・L列）の処理
+    room_a_id = campus_data.get('会議室ID1') # 実際の列名に合わせて適宜修正してください
+    room_b_id = campus_data.get('会議室ID2') # 実際の列名に合わせて適宜修正してください
     
     found_rooms = []
-    if pd.notna(room_a_id) and str(room_a_id).strip():
-        calendar_urls.append(f"&src={room_a_id.strip()}&color=%23979797")
-        found_rooms.append({"name": "会議室A (K列)", "id": room_a_id.strip()})
-    if pd.notna(room_b_id) and str(room_b_id).strip():
-        calendar_urls.append(f"&src={room_b_id.strip()}&color=%23979797")
-        found_rooms.append({"name": "会議室B (L列)", "id": room_b_id.strip()})
+    if pd.notna(room_a_id) and is_valid_email(room_a_id):
+        room_id_str = str(room_a_id).strip()
+        calendar_urls.append(f"&src={room_id_str}&color=%23979797")
+        found_rooms.append({"name": "会議室A", "id": room_id_str})
+        
+    if pd.notna(room_b_id) and is_valid_email(room_b_id):
+        room_id_str = str(room_b_id).strip()
+        calendar_urls.append(f"&src={room_id_str}&color=%23979797")
+        found_rooms.append({"name": "会議室B", "id": room_id_str})
 
-    # 3. Googleカレンダー埋め込みURLの自動合成（週表示・WEEKモード）
+    # 3. Googleカレンダー埋め込みURLの合成
     base_embed_url = "https://calendar.google.com/calendar/embed?mode=WEEK&wkst=1&hl=ja&ctz=Asia/Tokyo"
-    final_calendar_url = base_embed_url + "".join(calendar_urls)
+    
+    # 💡 有効なカレンダーIDが1つもない場合は、ダミーとして表示可能な公式日本の祝日などを表示してエラーを回避
+    if not calendar_urls:
+        final_calendar_url = base_embed_url + "&src=ja.japanese%23holiday%40group.v.calendar.google.com&color=%232952A3"
+        st.info("ℹ️ 現在、表示できる有効な担当者・会議室のカレンダーIDが登録されていません。")
+    else:
+        final_calendar_url = base_embed_url + "".join(calendar_urls)
 
-    # 画面に重ね合わせカレンダーを特大表示！
+    # 画面に重ね合わせカレンダーを表示
     st.components.v1.iframe(final_calendar_url, height=700, scrolling=True)
     
     # 🚨 スプシのI列の備考欄テキスト（バッファの注意書きなど）をそのまま下に綺麗に表示
