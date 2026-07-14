@@ -181,7 +181,7 @@ with col_left:
         found_rooms.append({"name": "会議室B", "id": room_id_str})
 
     # 3. Googleカレンダー埋め込みURLの合成
-    base_embed_url = "https://calendar.google.com/calendar/embed?mode=DAILY&wkst=1&hl=ja&ctz=Asia/Tokyo"
+    base_embed_url = "https://calendar.google.com/calendar/embed?mode=day&wkst=1&hl=ja&ctz=Asia/Tokyo"
     
     # 💡 有効なカレンダーIDが1つもない場合は、ダミーとして表示可能な公式日本の祝日などを表示してエラーを回避
     if not calendar_urls:
