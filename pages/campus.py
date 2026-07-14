@@ -90,7 +90,7 @@ with col_left:
     st.subheader(f"📅 {selected_campus}校 週間スケジュール")
     
     # 1. 担当者情報の自動回収と色割り当て
-    staff_names = parse_staff_from_notes(campus_data.get('I列の備考欄のヘッダー名', '備考'))
+    staff_names = parse_staff_from_notes(campus_data.get('担当者に関する備考欄', '備考'))
     
     # 優先度ごとの固定カラーコード（1番目:赤、2番目:青、3番目:緑）
     priority_colors = ["%23B1365F", "%232952A3", "%230D7813"]
@@ -112,8 +112,8 @@ with col_left:
             st.warning(f"⚠️ 担当者マスタに「{name}」さんが登録されていません。")
 
     # 2. 会議室ID（K列・L列）の回収（会議室は地味なグレー「%23979797」で固定）
-    room_a_id = campus_data.get('K列のヘッダー名') # K列
-    room_b_id = campus_data.get('L列のヘッダー名') # L列
+    room_a_id = campus_data.get('会議室①') # K列
+    room_b_id = campus_data.get('会議室②') # L列
     
     found_rooms = []
     if pd.notna(room_a_id) and str(room_a_id).strip():
@@ -133,7 +133,7 @@ with col_left:
     # 🚨 スプシのI列の備考欄テキスト（バッファの注意書きなど）をそのまま下に綺麗に表示
     st.markdown("---")
     st.markdown("#### 📌 校舎・担当者に関する注意事項")
-    notes_text = campus_data.get('I列の備考欄のヘッダー名', '備考')
+    notes_text = campus_data.get('担当者に関する備考欄', '備考')
     if pd.notna(notes_text):
         st.info(notes_text)
 
