@@ -181,7 +181,12 @@ with col_left:
         found_rooms.append({"name": "会議室B", "id": room_id_str})
 
     # 3. Googleカレンダー埋め込みURLの合成
-    base_embed_url = "https://calendar.google.com/calendar/embed?mode=day&wkst=1&hl=ja&ctz=Asia/Tokyo"
+    # 今日の日付を自動取得して、開始日と終了日を「今日だけ」に固定するパラメータを作成
+    today_str = datetime.date.today().strftime("%Y%m%d")
+    date_param = f"&dates={today_str}/{today_str}"
+    
+    # mode=WEEKのまま、日付の範囲を今日1日に狭めることで擬似的にデイリー表示を作ります
+    base_embed_url = f"https://calendar.google.com/calendar/embed?mode=WEEK&wkst=1&hl=ja&ctz=Asia/Tokyo{date_param}"
     
     # 💡 有効なカレンダーIDが1つもない場合は、ダミーとして表示可能な公式日本の祝日などを表示してエラーを回避
     if not calendar_urls:
