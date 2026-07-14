@@ -1,187 +1,217 @@
 # pages/campus.py
 import streamlit as st
 import pandas as pd
-import requests
-from io import StringIO
+import datetime
+import re
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
-# --- 🚨 スプレッドシートの共有URLを設定 🚨 ---
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRNLGbIj6c_sWtQUqLBgywLhDH1dec1OkUr4mG21XRXWU7_DoMfIGrj-S3xyp_aDjSUmXJ4_ZvGitfz/pub?gid=628921947&single=true&output=csv"
+# =========================================================================
+# ⚙️ 1. 初期設定 & Google API 認証ロジック
+# =========================================================================
+# GoogleカレンダーAPIにアクセスするための設定（後ほどst.secretsに鍵を格納します）
+SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-# --- キャッシュによるデータ読み込み関数 ---
-@st.cache_data
-def load_campus_master_safe(url):
+def get_calendar_service():
     try:
-        csv_url = url
-        
-        # 文字化け対策
-        response = requests.get(csv_url, timeout=5)
-        response.encoding = 'utf-8'
-        
-        if response.status_code == 200:
-            df = pd.read_csv(StringIO(response.text))
-            df.columns = df.columns.str.strip()
-            return df
-        else:
-            return pd.DataFrame()
+        # StreamlitのSecretsから認証情報を読み込む
+        creds_dict = st.secrets["google_credentials"]
+        creds = service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+        return build('calendar', 'v3', credentials=creds)
     except Exception as e:
-        return pd.DataFrame()
+        # 認証情報が未設定の場合はNoneを返し、画面上で警告を出す
+        return None
 
-# データの読み込み
-df_campus = load_campus_master_safe(SPREADSHEET_URL)
+service = get_calendar_service()
 
-# --- 信号機・行の色付けロジック ＆ 表の見た目調整 ---
-def style_campus_df(df):
-    # 画面の表に見せたい列（「東西」は非表示）
-    display_cols = [
-        "エリア", 
-        "校舎名", 
-        "校舎名(ふりがな)", 
-        "受付状況", 
-        "中学生受付", 
-        "中学生ディレクション", 
-        "校舎ディレクション", 
-        "担当者に関する備考欄", 
-        "最寄り駅"
-    ]
+# =========================================================================
+# 📊 2. スプレッドシートからのデータ読み込み
+# =========================================================================
+# 💡 ご自身のスプレッドシートのURLまたはIDに書き換えてください
+# ※ 末尾を「/export?format=csv&gid=シートID」にすることで直接CSVとして読み込めます
+CAMPUS_SHEET_URL = st.secrets.get("CAMPUS_SHEET_URL", "https://docs.google.com/spreadsheets/d/xxxxxx/export?format=csv&gid=0")
+STAFF_SHEET_URL = st.secrets.get("STAFF_SHEET_URL", "https://docs.google.com/spreadsheets/d/xxxxxx/export?format=csv&gid=11111")
+
+@st.cache_data(ttl=60) # 1分間キャッシュ（現場のスプシ更新をすぐ反映するため）
+def load_data():
+    df_campus = pd.read_csv(CAMPUS_SHEET_URL)
+    df_staff = pd.read_csv(STAFF_SHEET_URL)
+    return df_campus, df_staff
+
+try:
+    df_campus, df_staff = load_data()
+except Exception as e:
+    st.error(f"スプレッドシートの読み込みに失敗しました。URLまたは共有設定を確認してください: {e}")
+    st.stop()
+
+# =========================================================================
+# 📝 3. 担当者名のお掃除 & 自動パース（解析）ロジック
+# =========================================================================
+def clean_name(name_str):
+    """末尾の『さん』『様』や不要なスペースを自動で削るお掃除関数"""
+    if pd.isna(name_str):
+        return ""
+    name_str = str(name_str).strip()
+    name_str = re.sub(r'(さん|様|氏|\s)+$', '', name_str)
+    return name_str.strip()
+
+def parse_staff_from_notes(notes):
+    """I列の備考欄から1行目を取り出し、優先度順に名前のリストを作成する"""
+    if pd.isna(notes) or not str(notes).strip():
+        return []
     
-    available_cols = [c for c in display_cols if c in df.columns]
-    sub_df = df[available_cols].copy()
+    # 1行目（改行の手前まで）を抽出
+    first_line = str(notes).split('\n')[0].strip()
     
-    # 🎨 空っぽのスタイル用の枠組みを作る
-    style_df = pd.DataFrame("", index=sub_df.index, columns=sub_df.columns)
+    # 『＞』または『>』で分割
+    raw_names = re.split(r'＞|>', first_line)
     
-    for idx, row in sub_df.iterrows():
-        status = str(row.get("受付状況", ""))
-        jr_status = str(row.get("中学生受付", ""))
+    # それぞれの名前をお掃除してリスト化
+    return [clean_name(name) for name in raw_names if name.strip()]
+
+# =========================================================================
+# 📱 4. 画面レイアウト構築
+# =========================================================================
+st.title("🏢 校舎詳細・面談スケジュール登録")
+st.caption("校舎ごとのカレンダー空き状況を確認し、その場で面談予約と会議室確保を行えます。")
+st.markdown("---")
+
+# 🏛️ 校舎選択プルダウン（スプシからユニークな校舎名を取得）
+campus_options = df_campus['校舎名'].dropna().unique().tolist()
+selected_campus = st.selectbox("📍 表示する校舎を選択してください", campus_options)
+
+# 選択された校舎のデータを抽出
+campus_data = df_campus[df_campus['校舎名'] == selected_campus].iloc[0]
+
+# --- 💡 ここから『左側カレンダー・右側予約フォーム』の2カラム構成 ---
+col_left, col_right = st.columns([1.3, 1.0])
+
+with col_left:
+    st.subheader(f"📅 {selected_campus}校 週間スケジュール")
+    
+    # 1. 担当者情報の自動回収と色割り当て
+    staff_names = parse_staff_from_notes(campus_data.get('I列の備考欄のヘッダー名', '備考'))
+    
+    # 優先度ごとの固定カラーコード（1番目:赤、2番目:青、3番目:緑）
+    priority_colors = ["%23B1365F", "%232952A3", "%230D7813"]
+    
+    calendar_urls = []
+    found_staff_info = [] # 予約フォームの選択肢用
+    
+    # 担当者マスタからIDを探してURLパラメータを作成
+    for idx, name in enumerate(staff_names):
+        # 表記揺れに対応するため、マスタ側の名前もお掃除して完全一致比較
+        matched_rows = df_staff[df_staff['担当者名'].apply(clean_name) == name]
         
-        # ルール①：受付状況が🔴や❌のときは、今まで通りの「薄い赤色」網掛け
-        if "🔴" in status or "❌" in status:
-            style_df.loc[idx] = "background-color: #ffcccc; color: #330000; font-weight: bold;"
-            
-        # -------------------------------------------------------------
-        # 【新ルール】受付状況が「🟡条件あり」のときは、「マイルドなオレンジ色」網掛け！
-        # 💡 これで赤（停止）と黄色（警告）の中間のニュアンスになります
-        # -------------------------------------------------------------
-        elif "🟡" in status:
-            # 薄いオレンジ色。赤ほどきつくなく、警告よりは目立ちます
-            style_df.loc[idx] = "background-color: #fbe5d6; color: #663300; font-weight: bold;"
-            
-        # 受付状況が💛などの警告色のとき（🔴❌🟡以外）は、1行まるまる薄黄色
-        elif "💛" in status:
-            style_df.loc[idx] = "background-color: #fff2cc; color: #332200; font-weight: bold;"
-            
-        # -------------------------------------------------------------
-        # ルール②：中学生受付が❌のときは、「中学生」に関する列だけ網掛け
-        # (ここから下はそのまま！）
-        # -------------------------------------------------------------
-        if "❌" in jr_status:
-            jr_style = "background-color: #fce4d6; color: #c00000; font-weight: bold; border: 1px solid #c00000;"
-            if "中学生受付" in style_df.columns:
-                style_df.loc[idx, "中学生受付"] = jr_style
-            if "中学生ディレクション" in style_df.columns:
-                style_df.loc[idx, "中学生ディレクション"] = jr_style
-        elif "💛" in jr_status or "📘" in jr_status:
-            jr_warn_style = "background-color: #fff2cc; color: #332200; font-weight: bold;"
-            if "中学生受付" in style_df.columns:
-                style_df.loc[idx, "中学生受付"] = jr_warn_style
-            if "中学生ディレクション" in style_df.columns:
-                style_df.loc[idx, "中学生ディレクション"] = jr_warn_style
-
-    return sub_df.style.apply(lambda _: style_df, axis=None)
-    
-# --- 画面のメイン表示処理 ---
-st.title("🏫 校舎ステータス一覧 ＆ スケジュール調整")
-
-if df_campus.empty:
-    st.warning("スプレッドシートからデータが読み込めなかったため、一覧を表示できません。")
-else:
-    st.markdown("### 🚨 【即電対応】全校舎 受付・アクセス状況一覧")
-    
-    # 💡 【重要】「東日本」「西日本」のタブを作成します！
-    tab_east, tab_west = st.tabs(["🗺️ 東日本エリア", "🗺️ 西日本エリア"])
-    
-    # --- 1. 東日本タブの中身 ---
-    with tab_east:
-        # スプシの「東西」列が「東日本」のデータだけを絞り込む（未入力なら東日本扱いにする安全策付き）
-        df_east = df_campus[(df_campus["東西"] == "東日本") | (df_campus["東西"].isna()) | (df_campus["東西"] == "")]
-        if not df_east.empty:
-            styled_east = style_campus_df(df_east)
-            st.dataframe(styled_east, use_container_width=True, hide_index=True, height=600)
+        if not matched_rows.empty:
+            staff_id = matched_rows.iloc[0]['カレンダーID']
+            color = priority_colors[idx] if idx < len(priority_colors) else "%235B5B5B"
+            calendar_urls.append(f"&src={staff_id}&color={color}")
+            found_staff_info.append({"name": name, "id": staff_id})
         else:
-            st.info("東日本に該当する校舎がありません。")
-            
-    # --- 2. 西日本タブの中身 ---
-    with tab_west:
-        # スプシの「東西」列が「西日本」のデータだけを絞り込む
-        df_west = df_campus[df_campus["東西"] == "西日本"]
-        if not df_west.empty:
-            styled_west = style_campus_df(df_west)
-            st.dataframe(styled_west, use_container_width=True, hide_index=True, height=600)
-        else:
-            st.info("西日本に該当する校舎データがありません。スプレッドシートの「東西」列を確認してください。")
+            st.warning(f"⚠️ 担当者マスタに「{name}」さんが登録されていません。")
+
+    # 2. 会議室ID（K列・L列）の回収（会議室は地味なグレー「%23979797」で固定）
+    room_a_id = campus_data.get('K列のヘッダー名') # K列
+    room_b_id = campus_data.get('L列のヘッダー名') # L列
     
+    found_rooms = []
+    if pd.notna(room_a_id) and str(room_a_id).strip():
+        calendar_urls.append(f"&src={room_a_id.strip()}&color=%23979797")
+        found_rooms.append({"name": "会議室A (K列)", "id": room_a_id.strip()})
+    if pd.notna(room_b_id) and str(room_b_id).strip():
+        calendar_urls.append(f"&src={room_b_id.strip()}&color=%23979797")
+        found_rooms.append({"name": "会議室B (L列)", "id": room_b_id.strip()})
+
+    # 3. Googleカレンダー埋め込みURLの自動合成（週表示・WEEKモード）
+    base_embed_url = "https://calendar.google.com/calendar/embed?mode=WEEK&wkst=1&hl=ja&ctz=Asia/Tokyo"
+    final_calendar_url = base_embed_url + "".join(calendar_urls)
+
+    # 画面に重ね合わせカレンダーを特大表示！
+    st.components.v1.iframe(final_calendar_url, height=700, scrolling=True)
+    
+    # 🚨 スプシのI列の備考欄テキスト（バッファの注意書きなど）をそのまま下に綺麗に表示
     st.markdown("---")
-    st.markdown("### 📅 カレンダー一元確認 ＆ 詳細アクセス情報")
+    st.markdown("#### 📌 校舎・担当者に関する注意事項")
+    notes_text = campus_data.get('I列の備考欄のヘッダー名', '備考')
+    if pd.notna(notes_text):
+        st.info(notes_text)
+
+with col_right:
+    st.subheader("📝 スケジュール登録フォーム")
     
-    col_select, _ = st.columns([1, 2])
-    with col_select:
-        campus_list = df_campus["校舎名"].dropna().tolist()
-        selected_campus = st.selectbox("詳細スケジュールを確認する校舎を選択", campus_list)
-        
-    c_info = df_campus[df_campus["校舎名"] == selected_campus].iloc[0]
-
-    col_d1, col_d2 = st.columns(2)
-    with col_d1:
-        st.markdown(f"#### 📢 {selected_campus} のディレクション")
-        
-        k_direction = str(c_info.get('校舎ディレクション', '特になし')).replace('\n', '<br>')
-        j_direction = str(c_info.get('中学生ディレクション', '特になし')).replace('\n', '<br>')
-        
-        st.markdown(f'<div style="background-color: #ffcccc; color: #330000; padding: 15px; border-radius: 5px; font-weight: normal;"><b>【全体受付状況】</b> {c_info.get("受付状況", "未設定")}<br><br>👉 {k_direction}</div>', unsafe_allow_html=True)
-        st.markdown('<div style="height: 10px;"></div>', unsafe_allow_html=True)
-        st.markdown(f'<div style="background-color: #fff2cc; color: #332200; padding: 15px; border-radius: 5px; font-weight: normal;"><b>【中学生の受付】</b> {c_info.get("中学生受付", "未設定")}<br><br>👉 {j_direction}</div>', unsafe_allow_html=True)
-        
-    with col_d2:
-        st.markdown("#### 📱 アクセス・基本情報")
-        
-        station = str(c_info.get('最寄り駅', '未設定')).replace('\n', '<br>')
-        address = str(c_info.get('住所', '未設定')).replace('\n', '<br>')
-        open_time = str(c_info.get('開校時間', '未設定')).replace('\n', '<br>')
-        study_time = str(c_info.get('自習室利用時間', '未設定')).replace('\n', '<br>')
-        mendan_time = str(c_info.get('面談可能時間', '未設定')).replace('\n', '<br>')
-        
-        st.markdown(f"""
-        <div style="background-color: #d1e7dd; color: #0f5132; padding: 15px; border-radius: 5px;">
-        📌 <b>最寄り駅:</b> {station}<br>
-        (開校: {open_time} / 自習室: {study_time})<br><br>
-        📌 <b>面談可能時間:</b> {mendan_time}<br><br>
-        📌 <b>住所:</b> {address}
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True)
-        col_btn1, col_btn2 = st.columns(2)
-        if pd.notna(c_info.get('Googleマップ')) and str(c_info.get('Googleマップ')).startswith("http"):
-            col_btn1.link_button("🗺️ Googleマップで開く", c_info['Googleマップ'], use_container_width=True)
-        if pd.notna(c_info.get('HP')) and str(c_info.get('HP')).startswith("http"):
-            col_btn2.link_button("🌐 公式HPの校舎ページ", c_info['HP'], use_container_width=True)
-
-    st.markdown("---")
-    st.markdown(f"### 👥 {selected_campus} スケジュール＆会議室 一元確認（特大合体ビュー）")
+    if service is None:
+        st.warning("🔑 Google APIの認証情報が設定されていません。画面の閲覧は可能ですが、このフォームからの自動登録テストはスキップされます。")
     
-    if pd.notna(c_info.get('担当者に関する備考欄')) and str(c_info['担当者に関する備考欄']).strip() != "":
-        bikou = str(c_info['担当者に関する備考欄']).replace('\n', '<br>')
-        st.markdown(f"""
-        <div style="background-color: #fff3cd; color: #664d03; padding: 15px; border-radius: 5px; border-left: 5px solid #ffc107;">
-        🚗 <b>【担当者に関する備考・移動注意】</b><br><br>
-        {bikou}
-        </div>
-        """, unsafe_allow_html=True)
-
-    combined_url = c_info.get("カレンダーURL")
-
-    if pd.notna(combined_url) and str(combined_url).startswith("http"):
-        st.caption("💡 複数のカレンダー・会議室の予定が1つの画面に重なって表示されています。")
-        st.components.v1.iframe(str(combined_url).strip(), height=750, scrolling=True)
+    # 1. 担当者の選択（その校舎にいる人だけが自動抽出される）
+    if found_staff_info:
+        staff_options = [s["name"] for s in found_staff_info]
+        selected_staff_name = st.selectbox("👤 担当者を選択", staff_options)
+        selected_staff_id = next(s["id"] for s in found_staff_info if s["name"] == selected_staff_name)
     else:
-        st.info("この校舎の「カレンダーURL」列に有効なURLが登録されていません。スプレッドシートを確認してください。")
+        st.error("この校舎には有効な担当者が割り当てられていません。")
+        selected_staff_id = None
+
+    # 2. 会議室の選択（K列・L列にIDが入っている部屋だけが表示される）
+    if found_rooms:
+        room_options = ["部屋を指定しない"] + [r["name"] for r in found_rooms]
+        selected_room_name = st.selectbox("🚪 抑える会議室を選択", room_options)
+        selected_room_id = next((r["id"] for r in found_rooms if r["name"] == selected_room_name), None)
+    else:
+        st.caption("🔒 この校舎に登録されている会議室はありません（空欄のまま進みます）。")
+        selected_room_id = None
+
+    # 3. 日時と顧客名の入力
+    appointment_date = st.date_input("📅 面谈日を選択", datetime.date.today())
+    
+    col_t1, col_t2 = st.columns(2)
+    time_options = [f"{h:02d}:{m:02d}" for h in range(9, 22) for m in [0, 30]]
+    with col_t1:
+        start_time_str = st.selectbox("⏰ 開始時間", time_options, index=10) # デフォルト14:00
+    with col_t2:
+        end_time_str = st.selectbox("⏰ 終了時間", time_options, index=13) # デフォルト15:30
+        
+    customer_name = st.text_input("👤 顧客名（例：山田太郎）", placeholder="山田太郎")
+
+    # 4. タイトルの自動生成プレビュー
+    title_text = f"【受験相談＠{selected_campus}校】{clean_name(customer_name)}様"
+    st.markdown(f"**生成されるタイトル:** `{title_text}`")
+    
+    # 5. 登録実行ボタン
+    if st.button("📅 この内容でカレンダー・会議室を予約する", use_container_width=True, type="primary"):
+        if not customer_name:
+            st.error("❌ 顧客名を入力してください。")
+        elif not selected_staff_id:
+            st.error("❌ 担当者が選択されていないため予約できません。")
+        else:
+            # ISO形式の開始・終了日時文字列を作成
+            start_datetime = f"{appointment_date}T{start_time_str}:00"
+            end_datetime = f"{appointment_date}T{end_time_str}:00"
+            
+            # APIに送信する予定オブジェクトの作成（主催者のカレンダーに作り、担当者と会議室を招待する）
+            event_body = {
+                'summary': title_text,
+                'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
+                'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
+                'attendees': [
+                    {'email': selected_staff_id} # 担当者をゲスト招待
+                ]
+            }
+            
+            # 会議室も選択されていれば招待枠に追加
+            if selected_room_id:
+                event_body['attendees'].append({'email': selected_room_id})
+            
+            # Googleカレンダーへ送信実行
+            if service:
+                try:
+                    event = service.events().insert(
+                        calendarId='primary', # 主催者（現在ログイン中、またはAPIキーを持つ人）のメインカレンダー
+                        body=event_body,
+                        sendUpdates='all' # 招待相手に通知メールを飛ばす設定
+                    ).execute()
+                    st.success(f"🎉 予約が完了しました！\n担当者と会議室にカレンダー招待を送信しました。")
+                except Exception as e:
+                    st.error(f"Googleカレンダーへの登録中にエラーが発生しました: {e}")
+            else:
+                st.info("👍 (デモ実行) 認証キーが設定されると、上記の内容で担当者と会議室へ同時に招待状が送信されます。")
