@@ -61,7 +61,7 @@ def clean_name(name_str):
 def parse_staff_from_notes(notes, df_staff):
     """
     I列の備考欄から1行目を取り出し、優先度順に名前のリストを作成する。
-    『＞』『>』『・』『＆』『&』『、』『,』での分割に対応し、部分一致でマスタから検索する。
+    『＞』『>』『・』『＆』『&』『、』『,』での分割に対応し、カッコとその中身は事前に消去する。
     """
     if pd.isna(notes) or not str(notes).strip():
         return []
@@ -69,33 +69,33 @@ def parse_staff_from_notes(notes, df_staff):
     # 1. 1行目（改行の手前まで）を抽出
     first_line = str(notes).split('\n')[0].strip()
     
-    # 2. 複数の区切り文字（＞, >, ・, ＆, &, 、, ,）に対応して分割
-    raw_names = re.split(r'[\(（].*?[\)）|＞|>|・|＆|&|＝|=|(|）|（|)|、|,', first_line)
+    # 2. 【超重要】分割する前に、まず全角・半角のカッコとその中身を完全に消し去る！
+    # 例: 「(田中)＞(林)」 ➔ 「田中＞林」 になる
+    # 例: 「佐藤(優)＆平野」 ➔ 「佐藤＆平野」 になる
+    cleaned_line = re.sub(r'[\(（].*?[\)）]', '', first_line)
+    
+    # 3. カッコが消えてスッキリした文字列を、区切り文字でキレイに分割する
+    raw_names = re.split(r'＞|>|・|＆|&|、|,', cleaned_line)
+    
+    # 4. 前後の余計なスペースや「さん」「様」をお掃除してリスト化
     cleaned_input_names = [clean_name(name) for name in raw_names if name.strip()]
     
-    # 3. マスタ側の名前もお掃除し、文字数が長い順にソート（名字被り時の誤判定防止対策）
+    # ---（以下、マスタとの部分一致照合処理はそのまま）---
     df_staff_sorted = df_staff.copy()
     df_staff_sorted['clean_master_name'] = df_staff_sorted['担当者名'].apply(clean_name)
     df_staff_sorted['name_len'] = df_staff_sorted['clean_master_name'].str.len()
     df_staff_sorted = df_staff_sorted.sort_values(by='name_len', ascending=False)
     
     final_staff_names = []
-    
-    # 4. スプシに書かれた名前が、マスタの誰に含まれるか（または含むか）を部分一致で判定
     for input_name in cleaned_input_names:
         matched = False
         for _, row in df_staff_sorted.iterrows():
             master_name = row['clean_master_name']
-            
-            # 入力された名前がマスタの名前の一部、またはマスタの名前が入力の一部ならマッチとみなす
             if (input_name in master_name) or (master_name in input_name):
-                # 画面表示用にはマスタの正式名称を採用する
                 final_staff_names.append(row['担当者名'])
                 matched = True
-                break # 一番長くマッチした人で確定して次へ
-        
+                break
         if not matched:
-            # 誰にもマッチしなかった場合はそのまま入れる（後続処理で警告が出ます）
             final_staff_names.append(input_name)
             
     return final_staff_names
