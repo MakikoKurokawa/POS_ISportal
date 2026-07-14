@@ -156,8 +156,8 @@ with col_left:
                 st.warning(f"⚠️ 担当者マスタに「{name}」さんが登録されていません。")
 
     # 2. 会議室ID（K列・L列）の処理
-    room_a_id = campus_data.get('会議室ID1') # 実際の列名に合わせて適宜修正してください
-    room_b_id = campus_data.get('会議室ID2') # 実際の列名に合わせて適宜修正してください
+    room_a_id = campus_data.get('会議室①') # 実際の列名に合わせて適宜修正してください
+    room_b_id = campus_data.get('会議室②') # 実際の列名に合わせて適宜修正してください
     
     found_rooms = []
     if pd.notna(room_a_id) and is_valid_email(room_a_id):
