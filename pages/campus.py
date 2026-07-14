@@ -29,8 +29,11 @@ service = get_calendar_service()
 # =========================================================================
 # 💡 ご自身のスプレッドシートのURLまたはIDに書き換えてください
 # ※ 末尾を「/export?format=csv&gid=シートID」にすることで直接CSVとして読み込めます
-CAMPUS_SHEET_URL = st.secrets.get("CAMPUS_SHEET_URL", "https://docs.google.com/spreadsheets/d/xxxxxx/export?format=csv&gid=0")
-STAFF_SHEET_URL = st.secrets.get("STAFF_SHEET_URL", "https://docs.google.com/spreadsheets/d/xxxxxx/export?format=csv&gid=11111")
+# 1. 校舎一覧シートのURL（gid=0 は校舎一覧タブのシートIDに変更）
+CAMPUS_SHEET_URL = "https://docs.google.com/spreadsheets/d/1M9PwHaNywxZEd1LyKj76lMW82R05pDKUArc6Ni4LaUc/export?format=csv&gid=628921947"
+
+# 2. 担当者マスタシートのURL（gid=11111 は担当者マスタタブのシートIDに変更）
+STAFF_SHEET_URL = "https://docs.google.com/spreadsheets/d/1M9PwHaNywxZEd1LyKj76lMW82R05pDKUArc6Ni4LaUc/export?format=csv&gid=773023051"
 
 @st.cache_data(ttl=60) # 1分間キャッシュ（現場のスプシ更新をすぐ反映するため）
 def load_data():
