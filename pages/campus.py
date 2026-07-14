@@ -181,8 +181,8 @@ with col_left:
         found_rooms.append({"name": "会議室B", "id": room_id_str})
 
     # 3. Googleカレンダー埋め込みURLの合成
-    # mode=AGENDA（スケジュール表示）にすることで、今日1日の予定だけをリスト形式でデイリー表示します
-    base_embed_url = "https://calendar.google.com/calendar/embed?mode=AGENDA&wkst=1&hl=ja&ctz=Asia/Tokyo"
+    # 時間軸で空き時間が見やすい標準のWEEK（週表示）に戻します
+    base_embed_url = "https://calendar.google.com/calendar/embed?mode=WEEK&wkst=1&hl=ja&ctz=Asia/Tokyo"
     
     # 💡 有効なカレンダーIDが1つもない場合は、ダミーとして表示可能な公式日本の祝日などを表示してエラーを回避
     if not calendar_urls:
