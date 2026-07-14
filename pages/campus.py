@@ -243,15 +243,42 @@ with col_right:
         st.caption("🔒 この校舎に登録されている会議室はありません（空欄のまま進みます）。")
         selected_room_id = None
 
-    # 3. 日時と顧客名の入力
+# 3. 日時と顧客名の入力
     appointment_date = st.date_input("📅 面谈日を選択", datetime.date.today())
     
-    col_t1, col_t2 = st.columns(2)
+    # 時間の選択肢を先に定義（30分刻み）
     time_options = [f"{h:02d}:{m:02d}" for h in range(9, 22) for m in [0, 30]]
+    
+    # 💡 初回表示時のデフォルト値をセッションに保存（開始:14:00 / 終了:15:30）
+    if "start_time_sel" not in st.session_state:
+        st.session_state.start_time_sel = time_options[10]
+    if "end_time_sel" not in st.session_state:
+        st.session_state.end_time_sel = time_options[13]
+
+    # 💡 開始時間が変更されたときに、自動で90分後（3つ先）を計算して終了時間にセットする処理
+    def handle_start_time_change():
+        try:
+            current_idx = time_options.index(st.session_state.start_time_sel)
+            # 30分×3＝90分後。リストの最大値を超えないように制御
+            target_idx = min(current_idx + 3, len(time_options) - 1)
+            st.session_state.end_time_sel = time_options[target_idx]
+        except ValueError:
+            pass
+
+    col_t1, col_t2 = st.columns(2)
     with col_t1:
-        start_time_str = st.selectbox("⏰ 開始時間", time_options, index=10) # デフォルト14:00
+        start_time_str = st.selectbox(
+            "⏰ 開始時間", 
+            time_options, 
+            key="start_time_sel", 
+            on_change=handle_start_time_change
+        )
     with col_t2:
-        end_time_str = st.selectbox("⏰ 終了時間", time_options, index=13) # デフォルト15:30
+        end_time_str = st.selectbox(
+            "⏰ 終了時間", 
+            time_options, 
+            key="end_time_sel"
+        )
         
     customer_name = st.text_input("👤 顧客名（例：山田太郎）", placeholder="山田太郎")
 
