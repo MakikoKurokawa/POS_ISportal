@@ -61,7 +61,8 @@ def clean_name(name_str):
 def parse_staff_from_notes(notes, df_staff):
     """
     I列の備考欄から1行目を取り出し、優先度順に名前のリストを作成する。
-    『＞』『>』『・』『＆』『&』『、』『,』での分割に対応し、カッコとその中身は事前に消去する。
+    『佐藤亮（軽部>森内）』のような、カッコ内に入れ子で区切りがあるパターンや、
+    『佐藤亮』➔『佐藤亮太』のような名字+名前の1文字欠けの部分一致にも完全対応。
     """
     if pd.isna(notes) or not str(notes).strip():
         return []
@@ -69,18 +70,20 @@ def parse_staff_from_notes(notes, df_staff):
     # 1. 1行目（改行の手前まで）を抽出
     first_line = str(notes).split('\n')[0].strip()
     
-    # 2. 【超重要】分割する前に、まず全角・半角のカッコとその中身を完全に消し去る！
-    # 例: 「(田中)＞(林)」 ➔ 「田中＞林」 になる
-    # 例: 「佐藤(優)＆平野」 ➔ 「佐藤＆平野」 になる
-    cleaned_line = re.sub(r'[\(（].*?[\)）]', '', first_line)
+    # 2. カッコの処理（中に区切り文字がある場合はカッコだけ外し、ただの補足ならカッコごと中身を消す）
+    # 例：「佐藤亮（軽部>森内）」➔「佐藤亮 軽部>森内」に変換
+    if any(sep in first_line for sep in ['＞', '>', '・', '＆', '&', '、', ',']):
+        # カッコを半角スペースに置き換えて、後で区切り文字と一緒に分割できるようにする
+        cleaned_line = re.sub(r'[\(（\)）]', ' ', first_line)
+    else:
+        # 単なる補足カッコ（例：佐藤（優））の場合はカッコと中身を消去
+        cleaned_line = re.sub(r'[\(（].*?[\)）]', '', first_line)
     
-    # 3. カッコが消えてスッキリした文字列を、区切り文字でキレイに分割する
-    raw_names = re.split(r'＞|>|・|＆|&|、|,', cleaned_line)
-    
-    # 4. 前後の余計なスペースや「さん」「様」をお掃除してリスト化
+    # 3. スペースや各種区切り文字で分割
+    raw_names = re.split(r'＞|>|・|＆|&|、|,|\s+', cleaned_line)
     cleaned_input_names = [clean_name(name) for name in raw_names if name.strip()]
     
-    # ---（以下、マスタとの部分一致照合処理はそのまま）---
+    # 4. マスタとの高度なあいまいマッチング
     df_staff_sorted = df_staff.copy()
     df_staff_sorted['clean_master_name'] = df_staff_sorted['担当者名'].apply(clean_name)
     df_staff_sorted['name_len'] = df_staff_sorted['clean_master_name'].str.len()
@@ -91,10 +94,17 @@ def parse_staff_from_notes(notes, df_staff):
         matched = False
         for _, row in df_staff_sorted.iterrows():
             master_name = row['clean_master_name']
-            if (input_name in master_name) or (master_name in input_name):
+            
+            # ① 完全一致、または一方がもう一方に完全に含まれる場合
+            # ②「佐藤亮」と「佐藤亮太」のように、入力がマスタの前方の一部に一致する場合（先頭2文字以上一致を条件にして誤判定を防ぐ）
+            if (input_name in master_name) or (master_name in input_name) or \
+               (len(input_name) >= 2 and master_name.startswith(input_name)) or \
+               (len(master_name) >= 2 and input_name.startswith(master_name)):
+                
                 final_staff_names.append(row['担当者名'])
                 matched = True
                 break
+        
         if not matched:
             final_staff_names.append(input_name)
             
