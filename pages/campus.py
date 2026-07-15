@@ -561,10 +561,11 @@ with bottom_col2:
             start_datetime = f"{appointment_date}T{start_time_str}:00+09:00"
             end_datetime = f"{appointment_date}T{end_time_str}:00+09:00"
 
+
             event_body_staff = {
                 'summary': title_text,
-                # 💡 location に会議室カレンダーID（メールアドレス）をセットします
-                'location': selected_room_id if (selected_room_id and room_api_ok) else "",
+                # 💡 room_api_ok はここには使わず、シンプルにIDがあるかないかだけで判定します
+                'location': selected_room_id if selected_room_id else "",
                 'description': f'自動登録テストにより作成された面談予定です。\n\n🔑 {room_text}',
                 'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
                 'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
