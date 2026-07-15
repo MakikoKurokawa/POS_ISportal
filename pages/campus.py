@@ -299,16 +299,58 @@ campus_list = df_raw["校舎名"].dropna().tolist() if "校舎名" in df_raw.col
 row1_col1, row1_col2 = st.columns([5, 5])
 
 with row1_col1:
+    # 💡 1. 東日本と西日本の校舎をスプシのデータから取得して分ける
+    if "東西" in df_raw.columns and "校舎名" in df_raw.columns:
+        east_campuses = df_raw[df_raw["東西"] == "東日本"]["校舎名"].dropna().tolist()
+        west_campuses = df_raw[df_raw["東西"] == "西日本"]["校舎名"].dropna().tolist()
+    else:
+        # 万が一「東西」列がない場合のフォールバック
+        east_campuses = df_raw["校舎名"].dropna().tolist()
+        west_campuses = []
+
+    # 💡 2. 仕切り線を混ぜて、一つのプルダウン用リストを作る
+    divider_east = "----------- 東日本 -----------"
+    divider_west = "----------- 西日本 -----------"
+    
+    campus_options = []
+    if east_campuses:
+        campus_options.append(divider_east)
+        campus_options.extend(east_campuses)
+    if west_campuses:
+        campus_options.append(divider_west)
+        campus_options.extend(west_campuses)
+
+    # もしどちらも空なら、元のリストをそのまま使う
+    if not campus_options:
+        campus_options = df_raw["校舎名"].dropna().tolist()
+
+    # 💡 3. 初期選択位置の調整（仕切り線を避けて、最初の「実際の校舎」をデフォルトにする）
+    default_index = 0
+    if len(campus_options) > 1 and campus_options[0] == divider_east:
+        default_index = 1  # 「----------- 東日本 -----------」を避けて1番目の校舎（津田沼など）を初期値にする
+
+    # プルダウンの表示
     selected_campus = st.selectbox(
         "🏫 校舎名を選択してください",
-        options=campus_list,
-        index=0
+        options=campus_options,
+        index=default_index
     )
+    
+    # 💡 4. 万が一ユーザーが「仕切り線」を選んでしまった場合の処理
+    # エラーで止まらないよう、仕切りが選ばれたらそのすぐ下の実際の校舎に強制的に置き換える
+    if selected_campus in [divider_east, divider_west]:
+        # 仕切り線のインデックスを取得
+        selected_idx = campus_options.index(selected_campus)
+        # その1つ下の要素（校舎名）を代わりに選択したことにする
+        if selected_idx + 1 < len(campus_options):
+            selected_campus = campus_options[selected_idx + 1]
+            st.warning(f"⚠️ エリア仕切りが選択されたため、自動的に「{selected_campus}」を選択しました。")
+
     # 選択された校舎のデータを特定
     campus_data = df_raw[df_raw["校舎名"] == selected_campus].iloc[0] if not df_raw[df_raw["校舎名"] == selected_campus].empty else None
 
 with row1_col2:
-    # 💡 プルダウンの上の余白（ラベル分の高さ）と揃えるためのスペーサー
+    # プルダウンの上の余白（ラベル分の高さ）と揃えるためのスペーサー
     st.write("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
     
     if campus_data is not None:
@@ -317,10 +359,6 @@ with row1_col2:
             st.link_button(f"🗺️ {selected_campus}校 のGoogleマップを開く (外部サイト)", map_url, use_container_width=True)
         else:
             st.button("🗺️ Googleマップ未登録", disabled=True, use_container_width=True)
-
-# 💡 行の間に少しだけ余白を作る
-st.write("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-
 # ------------------------------------------
 # 【行②】注意事項 ＆ 校舎受入状況・ディレクション
 # ------------------------------------------
