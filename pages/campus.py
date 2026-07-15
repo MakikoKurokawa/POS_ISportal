@@ -280,13 +280,60 @@ selected_campus = st.selectbox("📍 表示する校舎を選択してくださ�
 # 選択された校舎のデータを抽出
 campus_data = df_campus[df_campus['校舎名'] == selected_campus].iloc[0]
 
-# 🚨 スプシのI列の備考欄テキスト（バッファの注意書きなど）をそのまま綺麗に表示
-st.markdown("---")
-st.markdown("#### 📌 校舎・担当者に関する注意事項")
-notes_text = campus_data.get('担当者に関する備考欄', '備考')
-if pd.notna(notes_text):
-    st.info(notes_text)
+# ==========================================
+# 🏫 上部：校舎情報 ＆ 注意事項セクション (横並び)
+# ==========================================
+# 画面上部を「左 1 : 右 2」の比率で分割します
+top_col1, top_col2 = st.columns([3.5, 6.5])
+
+# ------------------------------------------
+# 【左側】📌 校舎・担当者に関する注意事項
+# ------------------------------------------
+with top_col1:
+    st.markdown("### 📌 校舎・担当者に関する注意事項")
     
+    # 選択されている校舎の備考欄（I列など）からテキストを取得して表示します
+    if 'selected_campus_row' in locals() or 'selected_campus' in globals():
+        # ※プログラム内の「選択された校舎の備考（notes）」を引っ張る変数に書き換えてください
+        # 例: notes_text = selected_campus_row["担当者に関する備考欄"]
+        notes_text = df_raw.loc[df_raw["校舎名"] == selected_campus, "担当者に関する備考欄"].values[0] if not df_raw[df_raw["校舎名"] == selected_campus].empty else ""
+        
+        if notes_text:
+            st.info(notes_text)
+        else:
+            st.caption("選択された校舎に特別な注意事項はありません。")
+    else:
+        st.caption("校舎を選択すると、ここに注意事項が表示されます。")
+
+
+# ------------------------------------------
+# 【右側】受け入れ状況（タブ） ＆ Googleマップ
+# ------------------------------------------
+with top_col2:
+    st.markdown("### 📊 校舎ステータス ＆ アクセス")
+    
+    # 🗺️ Googleマップのリンクを表示
+    if not df_raw[df_raw["校舎名"] == selected_campus].empty:
+        map_url = df_raw.loc[df_raw["校舎名"] == selected_campus, "Googleマップ"].values[0]
+        if pd.notna(map_url) and str(map_url).startswith("http"):
+            st.markdown(f"🔗 **[{selected_campus}校 のGoogleマップを開く 🗺️]({map_url})**")
+    
+    # 🔄 東日本・西日本のタブ切り替え表示
+    tab_east, tab_west = st.tabs(["🗺️ 東日本エリア", "🗺️ 西日本エリア"])
+    
+    with tab_east:
+        df_east = df_raw[df_raw["東西"] == "東日本"].copy() if "東西" in df_raw.columns else df_raw.copy()
+        if not df_east.empty:
+            styled_east = style_campus_df(df_east)
+            st.dataframe(styled_east, use_container_width=True, hide_index=True, height=220) # 高さを抑えてスッキリ表示
+            
+    with tab_west:
+        df_west = df_raw[df_raw["東西"] == "西日本"].copy() if "東西" in df_raw.columns else df_raw.copy()
+        if not df_west.empty:
+            styled_west = style_campus_df(df_west)
+            st.dataframe(styled_west, use_container_width=True, hide_index=True, height=220)
+
+st.markdown("---") # 境界線を入れて、ここから下にカレンダーや予約フォームを配置します
 
 # --- 💡 ここから『左側カレンダー・右側予約フォーム』の2カラム構成 ---
 col_left, col_right = st.columns([7, 3])
