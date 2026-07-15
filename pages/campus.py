@@ -287,24 +287,46 @@ except Exception as e:
     st.stop()
 
 # ==========================================
-# 🧱 【上段】校舎詳細セクション（横並び2カラム）
+# 🧱 【上段】校舎詳細セクション（高さを揃える行分割レイアウト）
 # ==========================================
-top_col1, top_col2 = st.columns([5, 5])
 
-# --- 【上段・左側】 ---
-with top_col1:
-    # ① 校舎名（プルダウン）
-    campus_list = df_raw["校舎名"].dropna().tolist() if "校舎名" in df_raw.columns else []
+# 1. データの読み込み＆選択（※すでに selected_campus を取得する部分はこれでOK）
+campus_list = df_raw["校舎名"].dropna().tolist() if "校舎名" in df_raw.columns else []
+
+# ------------------------------------------
+# 【行①】校舎名プルダウン ＆ Googleマップ
+# ------------------------------------------
+row1_col1, row1_col2 = st.columns([5, 5])
+
+with row1_col1:
     selected_campus = st.selectbox(
         "🏫 校舎名を選択してください",
         options=campus_list,
         index=0
     )
-    
     # 選択された校舎のデータを特定
     campus_data = df_raw[df_raw["校舎名"] == selected_campus].iloc[0] if not df_raw[df_raw["校舎名"] == selected_campus].empty else None
 
-    # ② 校舎・担当者に関する注意事項（大きく枠で囲んで表示）
+with row1_col2:
+    # 💡 プルダウンの上の余白（ラベル分の高さ）と揃えるためのスペーサー
+    st.write("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+    
+    if campus_data is not None:
+        map_url = campus_data.get("Googleマップ", "")
+        if pd.notna(map_url) and str(map_url).startswith("http"):
+            st.link_button(f"🗺️ {selected_campus}校 のGoogleマップを開く (外部サイト)", map_url, use_container_width=True)
+        else:
+            st.button("🗺️ Googleマップ未登録", disabled=True, use_container_width=True)
+
+# 💡 行の間に少しだけ余白を作る
+st.write("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+
+# ------------------------------------------
+# 【行②】注意事項 ＆ 校舎受入状況・ディレクション
+# ------------------------------------------
+row2_col1, row2_col2 = st.columns([5, 5])
+
+with row2_col1:
     st.markdown("**📌 校舎・担当者に関する注意事項**")
     if campus_data is not None and "担当者に関する備考欄" in df_raw.columns:
         notes_text = campus_data["担当者に関する備考欄"]
@@ -315,19 +337,8 @@ with top_col1:
     else:
         st.caption("注意事項データがありません。")
 
-# --- 【上段・右側】 ---
-with top_col2:
+with row2_col2:
     if campus_data is not None:
-        # ① Googleマップ（バナー・ボタン形式）
-        map_url = campus_data.get("Googleマップ", "")
-        if pd.notna(map_url) and str(map_url).startswith("http"):
-            # 目立つようにボタン形式（バナー風）でリンクを設置
-            st.link_button(f"🗺️ {selected_campus}校 のGoogleマップを開く (外部サイト)", map_url, use_container_width=True)
-        else:
-            st.button("🗺️ Googleマップ未登録", disabled=True, use_container_width=True)
-            
-        st.write("") # 少し隙間を空ける
-
         # ② 校舎受入状況・ディレクション
         status = campus_data.get("受付状況", "🟡確認中")
         col_dir = campus_data.get("校舎ディレクション", "")
