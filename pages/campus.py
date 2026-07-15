@@ -32,7 +32,7 @@ st.markdown("### 🏫 各校舎の受け入れ状況・ディレクション一�
 # 💡 スプレッドシート【校舎マスタ】のCSV取得URL（シート名: import）
 SPREADSHEET_ID = "1ycRBkG-Va6X3mj0cYD_Ie6JN2LQ4ped3q1Or5NYEMcA"
 SHEET_NAME = "import"
-csv_url = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}"
+csv_url = f"https://docs.google.com/spreadsheets/d/1M9PwHaNywxZEd1LyKj76lMW82R05pDKUArc6Ni4LaUc/gviz/tq?tqx=out:csv&sheet=import"
 
 # 1. 信号機・行の色付けロジック ＆ 表の見た目調整
 def style_campus_df(df):
