@@ -166,19 +166,19 @@ with col_left:
                 st.warning(f"⚠️ 担当者マスタに「{name}」さんが登録されていません。")
 
     # 2. 会議室ID（K列・L列）の処理
-    room_a_id = campus_data.get('会議室①') # 実際の列名に合わせて適宜修正してください
-    room_b_id = campus_data.get('会議室②') # 実際の列名に合わせて適宜修正してください
+    room_a_id = campus_data.get('面談ブース1') # 実際の列名に合わせて適宜修正してください
+    room_b_id = campus_data.get('面談ブース2') # 実際の列名に合わせて適宜修正してください
     
     found_rooms = []
     if pd.notna(room_a_id) and is_valid_email(room_a_id):
         room_id_str = str(room_a_id).strip()
         calendar_urls.append(f"&src={room_id_str}&color=%23979797")
-        found_rooms.append({"name": "会議室A", "id": room_id_str})
+        found_rooms.append({"name": "面談ブース1", "id": room_id_str})
         
     if pd.notna(room_b_id) and is_valid_email(room_b_id):
         room_id_str = str(room_b_id).strip()
         calendar_urls.append(f"&src={room_id_str}&color=%23979797")
-        found_rooms.append({"name": "会議室B", "id": room_id_str})
+        found_rooms.append({"name": "面談ブース2", "id": room_id_str})
 
     # 3. Googleカレンダー埋め込みURLの合成
     # 時間軸で空き時間が見やすい標準のWEEK（週表示）に戻します
