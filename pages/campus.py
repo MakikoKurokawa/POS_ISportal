@@ -172,6 +172,33 @@ def parse_staff_from_notes(notes, df_staff):
     else:
         # 単なる補足カッコ（例：佐藤（優））の場合はカッコと中身を消去
         cleaned_line = re.sub(r'[\(（].*?[\)）]', '', first_line)
+
+    import re
+
+def clean_staff_name(raw_text):
+    if not isinstance(raw_text, str):
+        return ""
+    
+    # 1. カッコとその中身（「（平日〜土曜日）」や「(日曜日)」など）を丸ごと削除
+    # 全角・半角どちらのカッコにも対応します
+    cleaned = re.sub(r"（[^）]+）", "", raw_text)
+    cleaned = re.sub(r"\([^)]+\)", "", cleaned)
+    
+    # 2. 万が一、カッコがなくて「神田 平日」のように書かれていた場合のために、
+    # 曜日や時間に関するキーワードを削る
+    ignore_words = ["平日", "土曜日", "日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜", "日曜", "所要", "時間"]
+    for word in ignore_words:
+        cleaned = cleaned.replace(word, "")
+        
+    # 3. 前後の余計なスペースや記号をトリミング
+    cleaned = cleaned.strip("  ,、※~～")
+    
+    return cleaned
+
+# 💡 使い方イメージ：
+# raw_staff_name = "神田（平日～土曜日）" などが入ってきた場合
+staff_name = clean_staff_name(raw_staff_name)
+# ➔ staff_name は「神田」になるので、「平日さん」のエラーが出なくなります！
     
     # 3. スペースや各種区切り文字で分割
     raw_names = re.split(r'＞|>|・|＆|&|=|＝|、|,|\s+', cleaned_line)
