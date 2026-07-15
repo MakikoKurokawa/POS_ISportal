@@ -571,48 +571,60 @@ with bottom_col2:
             if service:
                 try:
                     # 💡 【バッティング（重複）検知処理】
-                    # 会議室が選択されている場合、その時間帯の会議室カレンダーの空きをスキャンする
                     is_conflict = False
+                    room_api_ok = False
+                    
                     if selected_room_id:
                         st.info(f"🔍 {selected_room_name} の空き状況をリアルタイム確認中...")
-                        
-                        # APIを叩いて、希望日時の時間枠とぶつかる予定があるか取得
-                        events_result = service.events().list(
-                            calendarId=selected_room_id,
-                            timeMin=start_datetime,
-                            timeMax=end_datetime,
-                            singleEvents=True
-                        ).execute()
-                        
-                        existing_events = events_result.get('items', [])
-                        if len(existing_events) > 0:
-                            is_conflict = True
+                        try:
+                            # APIを叩いて重複確認
+                            events_result = service.events().list(
+                                calendarId=selected_room_id,
+                                timeMin=start_datetime,
+                                timeMax=end_datetime,
+                                singleEvents=True
+                            ).execute()
+                            
+                            existing_events = events_result.get('items', [])
+                            if len(existing_events) > 0:
+                                is_conflict = True
+                            room_api_ok = True
+                        except Exception as room_err:
+                            st.warning(f"⚠️ {selected_room_name} のカレンダーが見つかりません。共有設定やIDを確認してください。会議室の重複チェックをスキップします。")
                     
                     if is_conflict:
-                        # ❌ 重複があった場合：エラーを出して予約をストップ
+                        # ❌ 重複があった場合
                         conflict_event_title = existing_events[0].get('summary', '別の面談予定')
                         st.error(f"❌ バッティング検知: すでに【{selected_room_name}】には「{conflict_event_title}」が入っています！時間か会議室を変更してください。")
                     else:
-                        # 🟢 重複がない場合：通常通り予定を登録
-                        # 1. 担当者カレンダーへ登録
+                        # 🟢 重複がない場合：担当者のカレンダーに「会議室」を招待する形で1つの予定を作成
+                        
+                        # APIに送信する予定オブジェクトのベース
+                        event_body = {
+                            'summary': title_text,
+                            'description': '自動登録テストにより作成された面談予定です。',
+                            'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
+                            'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
+                        }
+
+                        # 💡 会議室が選ばれていてAPIが正常な場合、予定のゲスト（attendees）として会議室IDを紐づける
+                        if selected_room_id and room_api_ok:
+                            event_body['attendees'] = [
+                                {'email': selected_room_id, 'resource': True}
+                            ]
+                        
+                        # 💡 登録は「担当者のカレンダー（selected_staff_id）」の1回のみ実行！
+                        # これにより自動的に会議室カレンダー側にも予定が共有され、1つに紐づきます。
                         event = service.events().insert(
                             calendarId=selected_staff_id, 
                             body=event_body
                         ).execute()
                         
-                        # 2. 会議室カレンダーへ登録
-                        if selected_room_id:
-                            service.events().insert(
-                                calendarId=selected_room_id,
-                                body=event_body
-                            ).execute()
-                            st.balloons()
-                            st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）と会議室（{selected_room_name}）に予定を登録しました。")
+                        st.balloons()
+                        if selected_room_id and room_api_ok:
+                            st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）の予定に、会議室（{selected_room_name}）を紐づけて登録しました！")
                         else:
-                            st.balloons()
                             st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）に予定を登録しました。")
                             
                 except Exception as e:
                     st.error(f"Googleカレンダーへの登録中にエラーが発生しました。\n※対象カレンダーにサービスアカウントが共有されているか確認してください。\n詳細: {e}")
-            else:
-                st.info("👍 (デモ実行) 認証キーが設定されると、上記の内容で担当者と会議室へ同時に登録が実行されます。")
