@@ -297,34 +297,33 @@ with col_right:
             start_datetime = f"{appointment_date}T{start_time_str}:00"
             end_datetime = f"{appointment_date}T{end_time_str}:00"
             
+            # 💡 担当者のアドレスと、会議室のアドレスを「招待ゲスト」として登録する
+            attendees = [{'email': selected_staff_id}]
+            if selected_room_id:
+                attendees.append({'email': selected_room_id})
+
             # APIに送信する予定オブジェクト
             event_body = {
                 'summary': title_text,
                 'description': '自動登録テストにより作成された面談予定です。',
                 'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
                 'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
+                'attendees': attendees  # 💡 ゲストに原田さんや会議室を入れる
             }
             
-            # Googleカレンダーへ送信実行
             if service:
                 try:
-                    # 💡 担当者自身のメインカレンダー（selected_staff_id）へ直接予定を書き込む
+                    # 💡 主催者を「primary（あなた自身のカレンダー）」に指定して予定を作成する
+                    # これにより、サービスアカウントのセキュリティ制限（Delegation）を回避します
                     event = service.events().insert(
-                        calendarId=selected_staff_id, 
-                        body=event_body
+                        calendarId='primary', 
+                        body=event_body,
+                        sendUpdates='all' # 💡 招待メールを自動送信する設定
                     ).execute()
                     
-                    # 💡 会議室も選択されていれば、会議室カレンダー（selected_room_id）にも全く同じ予定を直接書き込む
-                    if selected_room_id:
-                        service.events().insert(
-                            calendarId=selected_room_id,
-                            body=event_body
-                        ).execute()
-                        st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）と会議室（{selected_room_name}）に予定を登録しました。")
-                    else:
-                        st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）に予定を登録しました。")
+                    st.success(f"🎉 予約が完了しました！\nあなたのカレンダーに予定を登録し、担当者（{selected_staff_name}さん）と会議室に招待を送信しました。")
                         
                 except Exception as e:
-                    st.error(f"Googleカレンダーへの登録中にエラーが発生しました。\n※対象カレンダーにサービスアカウントが共有されているか確認してください。\n詳細: {e}")
+                    st.error(f"Googleカレンダーへの登録中にエラーが発生しました。\n詳細: {e}")
             else:
-                st.info("👍 (デモ実行) 認証キーが設定されると、上記の内容で担当者と会議室へ同時に登録が実行されます。")
+                st.info("👍 (デモ実行) 認証キーが設定されると、上記の内容でカレンダーへ登録が実行されます。")
