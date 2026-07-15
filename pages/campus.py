@@ -27,7 +27,7 @@ service = get_calendar_service()
 import pandas as pd
 import streamlit as st
 
-st.markdown("### 🏫 各校舎の受け入れ状況・ディレクション一覧 (最新スプシ同期)")
+st.markdown("### 🏫 各校舎の受け入れ状況・ディレクション一覧")
 
 # 💡 スプレッドシート【校舎マスタ】のCSV取得URL（シート名: import）
 SPREADSHEET_ID = "1ycRBkG-Va6X3mj0cYD_Ie6JN2LQ4ped3q1Or5NYEMcA"
@@ -206,7 +206,7 @@ def parse_staff_from_notes(notes, df_staff):
 # =========================================================================
 # 📱 4. 画面レイアウト構築
 # =========================================================================
-st.title("🏢 校舎詳細・面談スケジュール登録")
+st.markdown("### 🏢 校舎詳細・面談スケジュール登録")
 st.caption("校舎ごとのカレンダー空き状況を確認し、その場で面談予約と会議室確保を行えます。")
 st.markdown("---")
 
