@@ -331,7 +331,11 @@ with row2_col1:
     if campus_data is not None and "担当者に関する備考欄" in df_raw.columns:
         notes_text = campus_data["担当者に関する備考欄"]
         if pd.notna(notes_text) and str(notes_text).strip():
-            st.info(notes_text)
+            # 💡 改行コード（\n）を、Markdownが確実に改行として認識する「改行＋改行（\n\n）」に置換します
+            formatted_notes = str(notes_text).replace("\n", "\n\n")
+            
+            # st.info の中で Markdown フォーマットを効かせて改行を維持して表示します
+            st.info(formatted_notes)
         else:
             st.caption("特別な注意事項はありません。")
     else:
