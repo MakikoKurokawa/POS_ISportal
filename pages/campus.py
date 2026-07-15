@@ -557,19 +557,8 @@ with bottom_col2:
             st.error("❌ 担当者が選択されていないため予約できません。")
         else:
             # ISO形式の開始・終了日時を作成
-            # Google API判定用にタイムゾーン「+09:00」を末尾に付加します
             start_datetime = f"{appointment_date}T{start_time_str}:00+09:00"
             end_datetime = f"{appointment_date}T{end_time_str}:00+09:00"
-
-
-            event_body_staff = {
-                'summary': title_text,
-                # 💡 room_api_ok はここには使わず、シンプルにIDがあるかないかだけで判定します
-                'location': selected_room_id if selected_room_id else "",
-                'description': f'自動登録テストにより作成された面談予定です。\n\n🔑 {room_text}',
-                'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
-                'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
-            }
             
             if service:
                 try:
@@ -600,34 +589,53 @@ with bottom_col2:
                         conflict_event_title = existing_events[0].get('summary', '別の面談予定')
                         st.error(f"❌ バッティング検知: すでに【{selected_room_name}】には「{conflict_event_title}」が入っています！時間か会議室を変更してください。")
                     else:
-                        # 🟢 重複がない場合：担当者のカレンダーに「会議室」を招待する形で1つの予定を作成
+                        # 🟢 重複がない場合：ボタンが押されたので、ここで安全に予定データを作成します
                         
-                        # APIに送信する予定オブジェクトのベース
-                        event_body = {
+                        # カレンダーの説明欄に書くテキストを定義
+                        room_text = f"【確保済み会議室】: {selected_room_name}" if (selected_room_id and room_api_ok) else "会議室指定なし"
+                        
+                        # 💡 担当者用の予定（場所/location に会議室IDをセットして連動を試みる）
+                        event_body_staff = {
                             'summary': title_text,
-                            'description': '自動登録テストにより作成された面談予定です。',
+                            'location': selected_room_id if (selected_room_id and room_api_ok) else "",
+                            'description': f'自動登録テストにより作成された面談予定です。\n\n🔑 {room_text}',
                             'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
                             'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
                         }
-
-                        # 💡 会議室が選ばれていてAPIが正常な場合、予定のゲスト（attendees）として会議室IDを紐づける
-                        if selected_room_id and room_api_ok:
-                            event_body['attendees'] = [
-                                {'email': selected_room_id, 'resource': True}
-                            ]
                         
-                        # 💡 登録は「担当者のカレンダー（selected_staff_id）」の1回のみ実行！
-                        # これにより自動的に会議室カレンダー側にも予定が共有され、1つに紐づきます。
+                        # 会議室用の予定
+                        event_body_room = {
+                            'summary': f"【使用中】{title_text}",
+                            'description': f'担当者: {selected_staff_name}さん\n自動登録テストにより作成された面談予定です。',
+                            'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
+                            'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
+                        }
+                        
+                        # 1. 担当者カレンダーへ直接書き込み
                         event = service.events().insert(
                             calendarId=selected_staff_id, 
-                            body=event_body
+                            body=event_body_staff
                         ).execute()
                         
-                        st.balloons()
+                        # 2. 会議室カレンダーへ直接書き込み
+                        room_registered = False
                         if selected_room_id and room_api_ok:
-                            st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）の予定に、会議室（{selected_room_name}）を紐づけて登録しました！")
+                            try:
+                                service.events().insert(
+                                    calendarId=selected_room_id,
+                                    body=event_body_room
+                                ).execute()
+                                room_registered = True
+                            except Exception:
+                                pass
+                        
+                        st.balloons()
+                        if room_registered:
+                            st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）と会議室（{selected_room_name}）にそれぞれ予定を登録しました。\n※担当者のカレンダー予定内に「🔑 {selected_room_name} 確保済み」と記載されています！")
                         else:
-                            st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）に予定を登録しました。")
+                            st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）に予定を登録しました。（※会議室の予約はスキップされました）")
                             
                 except Exception as e:
                     st.error(f"Googleカレンダーへの登録中にエラーが発生しました。\n※対象カレンダーにサービスアカウントが共有されているか確認してください。\n詳細: {e}")
+            else:
+                st.info("👍 (デモ実行) 認証キーが設定されると、上記の内容で担当者と会議室へ同時に登録が実行されます。")
