@@ -265,7 +265,7 @@ with col_right:
         except ValueError:
             pass
 
-    col_t1, col_t2 = st.columns([6.5,3.5)
+    col_t1, col_t2 = st.columns([6.5,3.5])
     with col_t1:
         start_time_str = st.selectbox(
             "⏰ 開始時間", 
