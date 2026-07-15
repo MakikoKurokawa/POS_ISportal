@@ -88,21 +88,35 @@ def style_campus_df(df):
 
     return sub_df.style.apply(lambda _: style_df, axis=None)
 
-# 2. スプシからデータを引っぱってきてスタイルを当てて表示する
+# 2. スプシからデータを引っぱってきてタブごとにスタイルを当てて表示する
 try:
     # リアルタイムでスプシから取得
     df_raw = pd.read_csv(csv_url)
     
-    # スタイリング関数を呼び出して適用
-    styled_df = style_campus_df(df_raw)
+    # 💡 東日本と西日本のタブを作成
+    tab_east, tab_west = st.tabs(["🗺️ 東日本", "🗺️ 西日本"])
     
-    # 💡 Streamlit上で色付きのテーブルを表示する
-    st.dataframe(styled_df, use_container_width=True, hide_index=True)
+    with tab_east:
+        # 「東西」列が「東日本」のデータだけを抽出
+        df_east = df_raw[df_raw["東西"] == "東日本"].copy() if "東西" in df_raw.columns else df_raw.copy()
+        if not df_east.empty:
+            styled_east = style_campus_df(df_east)
+            st.dataframe(styled_east, use_container_width=True, hide_index=True)
+        else:
+            st.info("東日本のデータが見つかりませんでした。")
+            
+    with tab_west:
+        # 「東西」列が「西日本」のデータだけを抽出
+        df_west = df_raw[df_raw["東西"] == "西日本"].copy() if "東西" in df_raw.columns else df_raw.copy()
+        if not df_west.empty:
+            styled_west = style_campus_df(df_west)
+            st.dataframe(styled_west, use_container_width=True, hide_index=True)
+        else:
+            st.info("西日本のデータが見つかりませんでした。")
 
 except Exception as e:
     st.error(f"⚠️ スプレッドシートからの最新データの読み込みに失敗しました。\n詳細: {e}")
     st.info("スプレッドシートの閲覧共有設定が「リンクを知っている人全員」になっているかご確認ください。")
-
 
 # =========================================================================
 # 📊 2. スプレッドシートからのデータ読み込み
