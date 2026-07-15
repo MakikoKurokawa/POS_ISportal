@@ -124,7 +124,7 @@ selected_campus = st.selectbox("📍 表示する校舎を選択してくださ�
 campus_data = df_campus[df_campus['校舎名'] == selected_campus].iloc[0]
 
 # --- 💡 ここから『左側カレンダー・右側予約フォーム』の2カラム構成 ---
-col_left, col_right = st.columns([1.3, 1.0])
+col_left, col_right = st.columns([7, 3])
 
 with col_left:
     st.subheader(f"📅 {selected_campus}校 週間スケジュール")
@@ -265,7 +265,7 @@ with col_right:
         except ValueError:
             pass
 
-    col_t1, col_t2 = st.columns([7.5,2.5])
+    col_t1, col_t2 = st.columns([1,1])
     with col_t1:
         start_time_str = st.selectbox(
             "⏰ 開始時間", 
