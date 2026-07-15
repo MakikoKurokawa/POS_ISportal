@@ -203,12 +203,14 @@ def parse_staff_from_notes(notes, df_staff):
             final_staff_names.append(input_name)
             
     return final_staff_names
+st.markdown("---")
+
 # =========================================================================
 # 📱 4. 画面レイアウト構築
 # =========================================================================
 st.markdown("### 🏢 校舎詳細・面談スケジュール登録")
 st.caption("校舎ごとのカレンダー空き状況を確認し、その場で面談予約と会議室確保を行えます。")
-st.markdown("---")
+
 
 # 🏛️ 校舎選択プルダウン（スプシからユニークな校舎名を取得）
 campus_options = df_campus['校舎名'].dropna().unique().tolist()
