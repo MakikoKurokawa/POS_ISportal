@@ -6,6 +6,17 @@ import re
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
+# 💡 校舎の一覧リストを定義
+CAMPUS_LIST = ["千葉", "津田沼", "海浜幕張", "市川", "金町", "西宮北口", "宝塚", "山科", "堅田"]
+
+# 💡 フォーム内に校舎の選択プルダウンを表示
+selected_campus = st.selectbox(
+    "🏫 校舎を選択してください",
+    options=CAMPUS_LIST,
+    placeholder="校舎を選択...",
+    index=0
+)
+
 # =========================================================================
 # ⚙️ 1. 初期設定 & Google API 認証ロジック
 # =========================================================================
