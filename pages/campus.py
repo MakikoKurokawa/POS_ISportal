@@ -6,17 +6,6 @@ import re
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# 💡 校舎の一覧リストを定義
-CAMPUS_LIST = ["千葉", "津田沼", "海浜幕張", "市川", "金町", "西宮北口", "宝塚", "山科", "堅田"]
-
-# 💡 フォーム内に校舎の選択プルダウンを表示
-selected_campus = st.selectbox(
-    "🏫 校舎を選択してください",
-    options=CAMPUS_LIST,
-    placeholder="校舎を選択...",
-    index=0
-)
-
 # =========================================================================
 # ⚙️ 1. 初期設定 & Google API 認証ロジック
 # =========================================================================
@@ -34,6 +23,86 @@ def get_calendar_service():
         return None
 
 service = get_calendar_service()
+
+import pandas as pd
+import streamlit as st
+
+st.markdown("### 🏫 各校舎の受け入れ状況・ディレクション一覧 (最新スプシ同期)")
+
+# 💡 スプレッドシート【校舎マスタ】のCSV取得URL（シート名: import）
+SPREADSHEET_ID = "1ycRBkG-Va6X3mj0cYD_Ie6JN2LQ4ped3q1Or5NYEMcA"
+SHEET_NAME = "import"
+csv_url = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}"
+
+# 1. 信号機・行の色付けロジック ＆ 表の見た目調整
+def style_campus_df(df):
+    # 画面の表に見せたい列（「東西」は非表示）
+    display_cols = [
+        "エリア", 
+        "校舎名", 
+        "校舎名(ふりがな)", 
+        "受付状況", 
+        "中学生受付", 
+        "中学生ディレクション", 
+        "校舎ディレクション", 
+        "担当者に関する備考欄", 
+        "最寄り駅"
+    ]
+    
+    available_cols = [c for c in display_cols if c in df.columns]
+    sub_df = df[available_cols].copy()
+    
+    # 🎨 空っぽのスタイル用の枠組みを作る
+    style_df = pd.DataFrame("", index=sub_df.index, columns=sub_df.columns)
+    
+    for idx, row in sub_df.iterrows():
+        status = str(row.get("受付状況", ""))
+        jr_status = str(row.get("中学生受付", ""))
+        
+        # -------------------------------------------------------------
+        # ルール①：受付状況が🔴、❌、または 🟡 のときは、1行まるまる赤色網掛け！
+        # -------------------------------------------------------------
+        if "🔴" in status or "❌" in status or "🟡" in status:
+            style_df.loc[idx] = "background-color: #ffcccc; color: #330000; font-weight: bold;"
+            
+        # 受付状況が💛などの警告色のとき（🟡以外）は、1行まるまる薄黄色
+        elif "💛" in status:
+            style_df.loc[idx] = "background-color: #fff2cc; color: #332200; font-weight: bold;"
+            
+        # -------------------------------------------------------------
+        # ルール②：中学生受付が❌のときは、「中学生」に関する列だけ網掛け
+        # -------------------------------------------------------------
+        if "❌" in jr_status:
+            jr_style = "background-color: #fce4d6; color: #c00000; font-weight: bold; border: 1px solid #c00000;"
+            if "中学生受付" in style_df.columns:
+                style_df.loc[idx, "中学生受付"] = jr_style
+            if "中学生ディレクション" in style_df.columns:
+                style_df.loc[idx, "中学生ディレクション"] = jr_style
+        # 中学生受付が💛や📘のときも、中学生の列だけを薄黄色に
+        elif "💛" in jr_status or "📘" in jr_status:
+            jr_warn_style = "background-color: #fff2cc; color: #332200; font-weight: bold;"
+            if "中学生受付" in style_df.columns:
+                style_df.loc[idx, "中学生受付"] = jr_warn_style
+            if "中学生ディレクション" in style_df.columns:
+                style_df.loc[idx, "中学生ディレクション"] = jr_warn_style
+
+    return sub_df.style.apply(lambda _: style_df, axis=None)
+
+# 2. スプシからデータを引っぱってきてスタイルを当てて表示する
+try:
+    # リアルタイムでスプシから取得
+    df_raw = pd.read_csv(csv_url)
+    
+    # スタイリング関数を呼び出して適用
+    styled_df = style_campus_df(df_raw)
+    
+    # 💡 Streamlit上で色付きのテーブルを表示する
+    st.dataframe(styled_df, use_container_width=True, hide_index=True)
+
+except Exception as e:
+    st.error(f"⚠️ スプレッドシートからの最新データの読み込みに失敗しました。\n詳細: {e}")
+    st.info("スプレッドシートの閲覧共有設定が「リンクを知っている人全員」になっているかご確認ください。")
+
 
 # =========================================================================
 # 📊 2. スプレッドシートからのデータ読み込み
