@@ -280,12 +280,12 @@ selected_campus = st.selectbox("📍 表示する校舎を選択してくださ�
 # 選択された校舎のデータを抽出
 campus_data = df_campus[df_campus['校舎名'] == selected_campus].iloc[0]
 
-    # 🚨 スプシのI列の備考欄テキスト（バッファの注意書きなど）をそのまま綺麗に表示
-    st.markdown("---")
-    st.markdown("#### 📌 校舎・担当者に関する注意事項")
-    notes_text = campus_data.get('担当者に関する備考欄', '備考')
-    if pd.notna(notes_text):
-        st.info(notes_text)
+# 🚨 スプシのI列の備考欄テキスト（バッファの注意書きなど）をそのまま綺麗に表示
+st.markdown("---")
+st.markdown("#### 📌 校舎・担当者に関する注意事項")
+notes_text = campus_data.get('担当者に関する備考欄', '備考')
+if pd.notna(notes_text):
+    st.info(notes_text)
     
 
 # --- 💡 ここから『左側カレンダー・右側予約フォーム』の2カラム構成 ---
