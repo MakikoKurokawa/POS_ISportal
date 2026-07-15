@@ -405,14 +405,8 @@ bottom_col1, bottom_col2 = st.columns([6.5, 3.5])
 
 # --- 【下段・左側】校舎カレンダー ---
 with bottom_col1:
-    st.markdown("### 📅 校舎カレンダー")
-    # 💡 ここに以前作成した calendar(...) 呼び出しコードを入れてください
-
 # --- 【下段・右側】登録フォーム ---
 with bottom_col2:
-    st.markdown("### ✍️ 登録フォーム")
-    # 💡 ここに予約登録の input (名前、開始・終了時間など) と 登録ボタンを入れてください
-# --- 💡 ここから『左側カレンダー・右側予約フォーム』の2カラム構成 ---
 col_left, col_right = st.columns([7, 3])
 
 with col_left:
