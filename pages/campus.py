@@ -610,25 +610,53 @@ with bottom_col2:
                             'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
                             'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
                         }
+
+                        # 💡 順序変更：まず会議室の予定を先に登録し、発行されたイベントID（room_event_id）を取得します
+                        room_registered = False
+                        room_event_id = ""
                         
-                        # 1. 担当者カレンダーへ直接書き込み
+                        if selected_room_id and room_api_ok:
+                            try:
+                                # 会議室用の予定オブジェクト
+                                event_body_room = {
+                                    'summary': title_text,
+                                    'description': f'担当者: {selected_staff_name}さん\n自動登録テストにより作成された面談予定です。',
+                                    'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
+                                    'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
+                                }
+                                room_event = service.events().insert(
+                                    calendarId=selected_room_id,
+                                    body=event_body_room
+                                ).execute()
+                                
+                                room_event_id = room_event.get('id', '')
+                                room_registered = True
+                            except Exception as room_insert_err:
+                                pass
+
+                        # 💡 担当者用の予定説明欄に、GASが検知するための【紐付け情報（目印）】を定義します
+                        system_info = ""
+                        if room_registered and room_event_id:
+                            system_info = f"\n\n--- SYSTEM INFO ---\nROOM_CALENDAR_ID: {selected_room_id}\nROOM_EVENT_ID: {room_event_id}"
+
+                        room_text = f"【確保済み会議室】: {selected_room_name}" if room_registered else "会議室指定なし"
+                        
+                        # 💡 担当者用の予定（説明欄に system_info を合体させます）
+                        event_body_staff = {
+                            'summary': title_text,
+                            'location': selected_room_id if room_registered else "",
+                            'description': f'自動登録テストにより作成された面談予定です。\n\n🔑 {room_text}{system_info}', # 👈 ここで合体！
+                            'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
+                            'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
+                        }
+                        
+                        # 担当者カレンダーへ登録
                         event = service.events().insert(
                             calendarId=selected_staff_id, 
                             body=event_body_staff
                         ).execute()
-                        
-                        # 2. 会議室カレンダーへ直接書き込み
-                        room_registered = False
-                        if selected_room_id and room_api_ok:
-                            try:
-                                service.events().insert(
-                                    calendarId=selected_room_id,
-                                    body=event_body_room
-                                ).execute()
-                                room_registered = True
-                            except Exception:
-                                pass
-                        
+
+
                         st.balloons()
                         if room_registered:
                             st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）と会議室（{selected_room_name}）にそれぞれ予定を登録しました。\n※担当者のカレンダー予定内に「🔑 {selected_room_name} 確保済み」と記載されています！")
