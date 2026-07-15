@@ -244,7 +244,7 @@ with col_right:
         selected_room_id = None
 
 # 3. 日時と顧客名の入力
-    appointment_date = st.date_input("📅 面谈日を選択", datetime.date.today())
+    appointment_date = st.date_input("📅 面談日を選択", datetime.date.today())
     
     # 時間の選択肢を先に定義（30分刻み）
     time_options = [f"{h:02d}:{m:02d}" for h in range(9, 22) for m in [0, 30]]
