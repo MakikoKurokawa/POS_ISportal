@@ -560,10 +560,12 @@ with bottom_col2:
             # Google API判定用にタイムゾーン「+09:00」を末尾に付加します
             start_datetime = f"{appointment_date}T{start_time_str}:00+09:00"
             end_datetime = f"{appointment_date}T{end_time_str}:00+09:00"
-            
-            event_body = {
+
+            event_body_staff = {
                 'summary': title_text,
-                'description': '自動登録テストにより作成された面談予定です。',
+                # 💡 location に会議室カレンダーID（メールアドレス）をセットします
+                'location': selected_room_id if (selected_room_id and room_api_ok) else "",
+                'description': f'自動登録テストにより作成された面談予定です。\n\n🔑 {room_text}',
                 'start': {'dateTime': start_datetime, 'timeZone': 'Asia/Tokyo'},
                 'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
             }
