@@ -174,7 +174,7 @@ def parse_staff_from_notes(notes, df_staff):
         cleaned_line = re.sub(r'[\(（].*?[\)）]', '', first_line)
     
     # 3. スペースや各種区切り文字で分割
-    raw_names = re.split(r'＞|>|・|＆|&|、|,|\s+', cleaned_line)
+    raw_names = re.split(r'＞|>|・|＆|&|=|＝|、|,|\s+', cleaned_line)
     cleaned_input_names = [clean_name(name) for name in raw_names if name.strip()]
     
     # 4. マスタとの高度なあいまいマッチング
