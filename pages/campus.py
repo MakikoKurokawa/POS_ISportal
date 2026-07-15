@@ -72,7 +72,7 @@ def parse_staff_from_notes(notes, df_staff):
     
     # 2. カッコの処理（中に区切り文字がある場合はカッコだけ外し、ただの補足ならカッコごと中身を消す）
     # 例：「佐藤亮（軽部>森内）」➔「佐藤亮 軽部>森内」に変換
-    if any(sep in first_line for sep in ['＞', '>', '・', '＆', '&', '、', ',']):
+    if any(sep in first_line for sep in ['＞', '>', '・', '＆',':','：', '&', '、', ',']):
         # カッコを半角スペースに置き換えて、後で区切り文字と一緒に分割できるようにする
         cleaned_line = re.sub(r'[\(（\)）]', ' ', first_line)
     else:
