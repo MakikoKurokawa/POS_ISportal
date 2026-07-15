@@ -348,15 +348,16 @@ with col_left:
     else:
         final_calendar_url = base_embed_url + "".join(calendar_urls)
 
-    # 画面に重ね合わせカレンダーを表示
-    st.components.v1.iframe(final_calendar_url, height=700, scrolling=True)
-    
-    # 🚨 スプシのI列の備考欄テキスト（バッファの注意書きなど）をそのまま下に綺麗に表示
+    # 🚨 スプシのI列の備考欄テキスト（バッファの注意書きなど）をそのまま綺麗に表示
     st.markdown("---")
     st.markdown("#### 📌 校舎・担当者に関する注意事項")
     notes_text = campus_data.get('担当者に関する備考欄', '備考')
     if pd.notna(notes_text):
         st.info(notes_text)
+    
+    # 画面に重ね合わせカレンダーを表示
+    st.components.v1.iframe(final_calendar_url, height=700, scrolling=True)
+    
 
 with col_right:
     st.subheader("📝 スケジュール登録フォーム")
