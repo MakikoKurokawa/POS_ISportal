@@ -278,7 +278,7 @@ st.caption("校舎ごとのカレンダー空き状況を確認し、その場�
 # 💡 1. データの読み込み（スプシから最新情報を取得）
 SPREADSHEET_ID = "1ycRBkG-Va6X3mj0cYD_Ie6JN2LQ4ped3q1Or5NYEMcA"
 SHEET_NAME = "import"
-csv_url = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}"
+csv_url = f"https://docs.google.com/spreadsheets/d/1M9PwHaNywxZEd1LyKj76lMW82R05pDKUArc6Ni4LaUc/gviz/tq?tqx=out:csv&sheet=import"
 
 try:
     df_raw = pd.read_csv(csv_url)
