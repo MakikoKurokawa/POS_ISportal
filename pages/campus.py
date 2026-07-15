@@ -405,13 +405,6 @@ bottom_col1, bottom_col2 = st.columns([6.5, 3.5])
 
 # --- 【下段・左側】校舎カレンダー ---
 with bottom_col1:
-    pass
-# --- 【下段・右側】登録フォーム ---
-with bottom_col2:
-    pass
-col_left, col_right = st.columns([7, 3])
-
-with col_left:
     st.subheader(f"📅 {selected_campus}校 週間スケジュール")
     
     # 1. 担当者情報の自動回収と色割り当て
@@ -420,7 +413,7 @@ with col_left:
     # 優先度ごとの固定カラーコード（1番目:赤、2番目:青、3番目:緑）
     priority_colors = ["%23B1365F", "%232952A3", "%230D7813"]
     
-# =========================================================================
+    # =========================================================================
     # 🎨 カレンダーURL合成処理（メールアドレス形式のみを許可して400エラーを防ぐ）
     # =========================================================================
     calendar_urls = []
@@ -446,13 +439,12 @@ with col_left:
             else:
                 st.warning(f"⚠️ 担当者「{name}」さんのカレンダーIDが正しいメールアドレス形式ではありません: {staff_id}")
         else:
-            # 1行目に注意事項（バッファなど）が紛れ込んでマスタにない場合は、警告を出さずに無視するか、優しく警告します
             if name and not any(keyword in name for keyword in ["バッファ", "移動", "注意", "時間"]):
                 st.warning(f"⚠️ 担当者マスタに「{name}」さんが登録されていません。")
 
     # 2. 会議室ID（K列・L列）の処理
-    room_a_id = campus_data.get('面談ブース1') # 実際の列名に合わせて適宜修正してください
-    room_b_id = campus_data.get('面談ブース2') # 実際の列名に合わせて適宜修正してください
+    room_a_id = campus_data.get('面談ブース1') 
+    room_b_id = campus_data.get('面談ブース2') 
     
     found_rooms = []
     if pd.notna(room_a_id) and is_valid_email(room_a_id):
@@ -466,10 +458,8 @@ with col_left:
         found_rooms.append({"name": "面談ブース2", "id": room_id_str})
 
     # 3. Googleカレンダー埋め込みURLの合成
-    # 時間軸で空き時間が見やすい標準のWEEK（週表示）に戻します
     base_embed_url = "https://calendar.google.com/calendar/embed?mode=WEEK&wkst=1&hl=ja&ctz=Asia/Tokyo"
     
-    # 💡 有効なカレンダーIDが1つもない場合は、ダミーとして表示可能な公式日本の祝日などを表示してエラーを回避
     if not calendar_urls:
         final_calendar_url = base_embed_url + "&src=ja.japanese%23holiday%40group.v.calendar.google.com&color=%232952A3"
         st.info("ℹ️ 現在、表示できる有効な担当者・会議室のカレンダーIDが登録されていません。")
@@ -478,9 +468,9 @@ with col_left:
         
     # 画面に重ね合わせカレンダーを表示
     st.components.v1.iframe(final_calendar_url, height=700, scrolling=True)
-    
 
-with col_right:
+# --- 【下段・右側】登録フォーム ---
+with bottom_col2:
     st.subheader("📝 スケジュール登録フォーム")
     
     # 🔑 StreamlitのSecretsからサービスアカウントの認証情報を読み込んでサービスを立ち上げる
@@ -490,7 +480,6 @@ with col_right:
             from google.oauth2 import service_account
             from googleapiclient.discovery import build
             
-            # 必要な権限（スコープ）を指定して認証オブジェクトを作成
             scopes = ['https://www.googleapis.com/auth/calendar']
             creds = service_account.Credentials.from_service_account_info(
                 dict(st.secrets["gcp_service_account"]), 
@@ -500,11 +489,10 @@ with col_right:
         except Exception as e:
             st.error(f"⚠️ 認証情報の読み込み中にエラーが発生しました。Secretsの記述を確認してください: {e}")
 
-    # 認証が成功していれば警告は消えます
     if service is None:
         st.warning("🔑 Google APIの認証情報が設定されていません。画面の閲覧は可能ですが、このフォームからの自動登録テストはスキップされます。")
     
-    # 1. 担当者の選択（その校舎にいる人だけが自動抽出される）
+    # 1. 担当者の選択
     if found_staff_info:
         staff_options = [s["name"] for s in found_staff_info]
         selected_staff_name = st.selectbox("👤 担当者を選択", staff_options)
@@ -513,7 +501,7 @@ with col_right:
         st.error("この校舎には有効な担当者が割り当てられていません。")
         selected_staff_id = None
 
-    # 2. 会議室の選択（K列・L列にIDが入っている部屋だけが表示される）
+    # 2. 会議室の選択
     if found_rooms:
         room_options = ["部屋を指定しない"] + [r["name"] for r in found_rooms]
         selected_room_name = st.selectbox("🚪 抑える会議室を選択", room_options)
@@ -522,23 +510,19 @@ with col_right:
         st.caption("🔒 この校舎に登録されている会議室はありません（空欄のまま進みます）。")
         selected_room_id = None
 
-# 3. 日時と顧客名の入力
+    # 3. 日時と顧客名の入力
     appointment_date = st.date_input("📅 面談日を選択", datetime.date.today())
     
-    # 時間の選択肢を先に定義（30分刻み）
     time_options = [f"{h:02d}:{m:02d}" for h in range(9, 22) for m in [0, 30]]
     
-    # 💡 初回表示時のデフォルト値をセッションに保存（開始:14:00 / 終了:15:30）
     if "start_time_sel" not in st.session_state:
         st.session_state.start_time_sel = time_options[10]
     if "end_time_sel" not in st.session_state:
         st.session_state.end_time_sel = time_options[13]
 
-    # 💡 開始時間が変更されたときに、自動で90分後（3つ先）を計算して終了時間にセットする処理
     def handle_start_time_change():
         try:
             current_idx = time_options.index(st.session_state.start_time_sel)
-            # 30分×3＝90分後。リストの最大値を超えないように制御
             target_idx = min(current_idx + 3, len(time_options) - 1)
             st.session_state.end_time_sel = time_options[target_idx]
         except ValueError:
@@ -565,18 +549,18 @@ with col_right:
     title_text = f"【受験相談＠{selected_campus}校】{clean_name(customer_name)}様"
     st.markdown(f"**生成されるタイトル:** `{title_text}`")
     
-# 5. 登録実行ボタン
+    # 5. 登録実行ボタン
     if st.button("📅 この内容でカレンダー・会議室を予約する", use_container_width=True, type="primary"):
         if not customer_name:
             st.error("❌ 顧客名を入力してください。")
         elif not selected_staff_id:
             st.error("❌ 担当者が選択されていないため予約できません。")
         else:
-            # ISO形式の開始・終了日時文字列を作成
-            start_datetime = f"{appointment_date}T{start_time_str}:00"
-            end_datetime = f"{appointment_date}T{end_time_str}:00"
+            # ISO形式の開始・終了日時を作成
+            # Google API判定用にタイムゾーン「+09:00」を末尾に付加します
+            start_datetime = f"{appointment_date}T{start_time_str}:00+09:00"
+            end_datetime = f"{appointment_date}T{end_time_str}:00+09:00"
             
-            # APIに送信する予定オブジェクト
             event_body = {
                 'summary': title_text,
                 'description': '自動登録テストにより作成された面談予定です。',
@@ -584,25 +568,50 @@ with col_right:
                 'end': {'dateTime': end_datetime, 'timeZone': 'Asia/Tokyo'},
             }
             
-            # Googleカレンダーへ送信実行
             if service:
                 try:
-                    # 💡 担当者自身のメインカレンダー（selected_staff_id）へ直接予定を書き込む
-                    event = service.events().insert(
-                        calendarId=selected_staff_id, 
-                        body=event_body
-                    ).execute()
-                    
-                    # 💡 会議室も選択されていれば、会議室カレンダー（selected_room_id）にも全く同じ予定を直接書き込む
+                    # 💡 【バッティング（重複）検知処理】
+                    # 会議室が選択されている場合、その時間帯の会議室カレンダーの空きをスキャンする
+                    is_conflict = False
                     if selected_room_id:
-                        service.events().insert(
+                        st.info(f"🔍 {selected_room_name} の空き状況をリアルタイム確認中...")
+                        
+                        # APIを叩いて、希望日時の時間枠とぶつかる予定があるか取得
+                        events_result = service.events().list(
                             calendarId=selected_room_id,
+                            timeMin=start_datetime,
+                            timeMax=end_datetime,
+                            singleEvents=True
+                        ).execute()
+                        
+                        existing_events = events_result.get('items', [])
+                        if len(existing_events) > 0:
+                            is_conflict = True
+                    
+                    if is_conflict:
+                        # ❌ 重複があった場合：エラーを出して予約をストップ
+                        conflict_event_title = existing_events[0].get('summary', '別の面談予定')
+                        st.error(f"❌ バッティング検知: すでに【{selected_room_name}】には「{conflict_event_title}」が入っています！時間か会議室を変更してください。")
+                    else:
+                        # 🟢 重複がない場合：通常通り予定を登録
+                        # 1. 担当者カレンダーへ登録
+                        event = service.events().insert(
+                            calendarId=selected_staff_id, 
                             body=event_body
                         ).execute()
-                        st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）と会議室（{selected_room_name}）に予定を登録しました。")
-                    else:
-                        st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）に予定を登録しました。")
                         
+                        # 2. 会議室カレンダーへ登録
+                        if selected_room_id:
+                            service.events().insert(
+                                calendarId=selected_room_id,
+                                body=event_body
+                            ).execute()
+                            st.balloons()
+                            st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）と会議室（{selected_room_name}）に予定を登録しました。")
+                        else:
+                            st.balloons()
+                            st.success(f"🎉 予約が完了しました！\n担当者（{selected_staff_name}さん）に予定を登録しました。")
+                            
                 except Exception as e:
                     st.error(f"Googleカレンダーへの登録中にエラーが発生しました。\n※対象カレンダーにサービスアカウントが共有されているか確認してください。\n詳細: {e}")
             else:
