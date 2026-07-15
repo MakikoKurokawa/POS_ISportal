@@ -173,40 +173,74 @@ def parse_staff_from_notes(notes, df_staff):
         # 単なる補足カッコ（例：佐藤（優））の場合はカッコと中身を消去
         cleaned_line = re.sub(r'[\(（].*?[\)）]', '', first_line)
 
-    import re
+import re
 
 def clean_staff_name(raw_text):
+    """
+    「神田（平日～土曜日）」や「脇水（日曜日）」のようなテキストから
+    曜日や余計なカッコを除去して、純粋な名前だけにする関数
+    """
     if not isinstance(raw_text, str):
         return ""
     
     # 1. カッコとその中身（「（平日〜土曜日）」や「(日曜日)」など）を丸ごと削除
-    # 全角・半角どちらのカッコにも対応します
     cleaned = re.sub(r"（[^）]+）", "", raw_text)
     cleaned = re.sub(r"\([^)]+\)", "", cleaned)
     
-    # 2. 万が一、カッコがなくて「神田 平日」のように書かれていた場合のために、
-    # 曜日や時間に関するキーワードを削る
+    # 2. カッコの外にある曜日や時間に関するキーワードを削る
     ignore_words = ["平日", "土曜日", "日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜", "日曜", "所要", "時間"]
     for word in ignore_words:
         cleaned = cleaned.replace(word, "")
         
     # 3. 前後の余計なスペースや記号をトリミング
     cleaned = cleaned.strip("  ,、※~～")
-    
     return cleaned
 
-# 💡 使い方イメージ：
-# raw_staff_name = "神田（平日～土曜日）" などが入ってきた場合
-staff_name = clean_staff_name(raw_staff_name)
-# ➔ staff_name は「神田」になるので、「平日さん」のエラーが出なくなります！
+def parse_staff_from_notes(notes, df_staff):
+    """
+    I列の備考欄から1行目を取り出し、優先度順に名前のリストを作成する。
+    『佐藤亮（軽部>森内）』のようなカッコ内入れ子パターンや、
+    曜日の記載（平日、日曜日など）の除去、部分一致にも対応。
+    """
+    if pd.isna(notes) or not str(notes).strip():
+        return []
+    
+    # 1. 1行目（改行の手前まで）を抽出
+    first_line = str(notes).split('\n')[0].strip()
+    
+    # 2. カッコの処理
+    # カッコ内に区切り文字がある場合は中身を残し、それ以外（単なる曜日補足など）は事前に clean_staff_name でお掃除
+    if any(sep in first_line for sep in ['＞', '>', '・', '＆', ':', '：', '&', '、', ',']):
+        cleaned_line = re.sub(r'[\(（\)）]', ' ', first_line)
+    else:
+        cleaned_line = re.sub(r'[\(（].*?[\)）]', '', first_line)
     
     # 3. スペースや各種区切り文字で分割
     raw_names = re.split(r'＞|>|・|＆|&|=|＝|、|,|\s+', cleaned_line)
-    cleaned_input_names = [clean_name(name) for name in raw_names if name.strip()]
+    
+    # 💡 分割したそれぞれの名前から「平日」「日曜日」などの曜日ノイズをきれいに除去する
+    cleaned_input_names = []
+    for name in raw_names:
+        if name.strip():
+            cleaned_n = clean_staff_name(name)
+            # 既存の clean_name 関数があればそれも適用（なければ通常の strip）
+            if 'clean_name' in globals():
+                cleaned_n = clean_name(cleaned_n)
+            else:
+                cleaned_n = cleaned_n.strip()
+            
+            if cleaned_n:  # お掃除後に空っぽにならなかった名前だけを追加
+                cleaned_input_names.append(cleaned_n)
     
     # 4. マスタとの高度なあいまいマッチング
     df_staff_sorted = df_staff.copy()
-    df_staff_sorted['clean_master_name'] = df_staff_sorted['担当者名'].apply(clean_name)
+    
+    # マスタ側も同様にお掃除
+    if 'clean_name' in globals():
+        df_staff_sorted['clean_master_name'] = df_staff_sorted['担当者名'].apply(lambda x: clean_name(clean_staff_name(x)))
+    else:
+        df_staff_sorted['clean_master_name'] = df_staff_sorted['担当者名'].apply(clean_staff_name)
+        
     df_staff_sorted['name_len'] = df_staff_sorted['clean_master_name'].str.len()
     df_staff_sorted = df_staff_sorted.sort_values(by='name_len', ascending=False)
     
@@ -217,7 +251,7 @@ staff_name = clean_staff_name(raw_staff_name)
             master_name = row['clean_master_name']
             
             # ① 完全一致、または一方がもう一方に完全に含まれる場合
-            # ②「佐藤亮」と「佐藤亮太」のように、入力がマスタの前方の一部に一致する場合（先頭2文字以上一致を条件にして誤判定を防ぐ）
+            # ②「佐藤亮」と「佐藤亮太」のように、入力がマスタの前方の一部に一致する場合
             if (input_name in master_name) or (master_name in input_name) or \
                (len(input_name) >= 2 and master_name.startswith(input_name)) or \
                (len(master_name) >= 2 and input_name.startswith(master_name)):
@@ -230,8 +264,8 @@ staff_name = clean_staff_name(raw_staff_name)
             final_staff_names.append(input_name)
             
     return final_staff_names
-st.markdown("---")
 
+st.markdown("---")
 # =========================================================================
 # 📱 4. 画面レイアウト構築
 # =========================================================================
