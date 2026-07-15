@@ -405,8 +405,10 @@ bottom_col1, bottom_col2 = st.columns([6.5, 3.5])
 
 # --- 【下段・左側】校舎カレンダー ---
 with bottom_col1:
+    pass
 # --- 【下段・右側】登録フォーム ---
 with bottom_col2:
+    pass
 col_left, col_right = st.columns([7, 3])
 
 with col_left:
